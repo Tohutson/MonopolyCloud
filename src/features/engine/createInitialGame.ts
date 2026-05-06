@@ -39,7 +39,6 @@ export function createInitialGame(): GameState {
 
     winnerId: null,
 
-    // TODO: Any events yet?
-    logs: [],
+    log: [],
   };
 }

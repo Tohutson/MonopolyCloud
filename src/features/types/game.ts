@@ -29,5 +29,5 @@ export interface GameState {
   lastDiceRoll: DiceRoll | null;
   hasRolledThisTurn: boolean;
   winnerId: string | null;
-  logs: GameLogEntry[];
+  log: GameLogEntry[];
 }
