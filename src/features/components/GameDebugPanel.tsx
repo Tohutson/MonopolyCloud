@@ -6,6 +6,9 @@ export function GameDebugPanel() {
   const state = useGameStore((store) => store.state);
   const dispatch = useGameStore((store) => store.dispatch);
 
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  const currentSquare = state.board[currentPlayer.position];
+
   return (
     <section className="rounded-xl border p-4">
       <h2 className="font-semibold">Game Debug Panel</h2>
@@ -14,6 +17,19 @@ export function GameDebugPanel() {
       <p>Current player index: {state.currentPlayerIndex}</p>
       <p>Players: {state.players.length}</p>
       <p>Board squares: {state.board.length}</p>
+
+      <p>Current player: {currentPlayer.name}</p>
+      <p>Current square: {currentSquare.name}</p>
+      <p>Cash: ${currentPlayer.cash}</p>
+
+      {state.lastDiceRoll ? (
+        <p>
+          Last roll: {state.lastDiceRoll.die1} + {state.lastDiceRoll.die2} ={" "}
+          {state.lastDiceRoll.total}
+        </p>
+      ) : (
+        <p>No dice rolled yet.</p>
+      )}
 
       <div className="mt-4 flex gap-2">
         <button
@@ -32,6 +48,16 @@ export function GameDebugPanel() {
           }}
         >
           Reset Game
+        </button>
+
+        <button
+          className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
+          disabled={state.status !== "ACTIVE" || state.hasRolledThisTurn}
+          onClick={() => {
+            dispatch({ type: "ROLL_DICE" });
+          }}
+        >
+          Roll Dice
         </button>
       </div>
     </section>
