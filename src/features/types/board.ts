@@ -1,21 +1,28 @@
-export type SquareType = 
-| "START"
-| "PROPERTY"
-| "TAX"
-| "CHANCE"
-| "JAIL"
-| "FREE_PARKING";
+export type SquareType =
+  | "START"
+  | "PROPERTY"
+  | "TAX"
+  | "CHANCE"
+  | "COMMUNITY_CHEST"
+  | "JAIL"
+  | "GO_TO_JAIL"
+  | "FREE_PARKING";
 
-export interface BoardSquare {
-    id: string;
-    index: number;
-    name: string;
-    type: SquareType;
+export interface BaseBoardSquare {
+  id: string;
+  index: number;
+  name: string;
 }
 
-export interface PropertySquare extends BoardSquare {
-    type: "PROPERTY";
-    price: number;
-    rent: number;
-    colorGroup: string;
+export interface NonPropertySquare extends BaseBoardSquare {
+  type: Exclude<SquareType, "PROPERTY">;
 }
+
+export interface PropertySquare extends BaseBoardSquare {
+  type: "PROPERTY";
+  price: number;
+  rent: number;
+  colorGroup: string;
+}
+
+export type BoardSquare = NonPropertySquare | PropertySquare;
