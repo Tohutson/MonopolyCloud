@@ -1,5 +1,5 @@
 import { GameState } from "../types/game";
-import { GameAction } from "./actions";
+import { GameAction } from "../types/actions";
 import { createInitialGame } from "./createInitialGame";
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
