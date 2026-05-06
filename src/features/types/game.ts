@@ -23,11 +23,11 @@ export interface GameState {
   gameId: string;
   status: GameStatus;
   players: Player[];
+  currentPlayerIndex: number;
   board: BoardSquare[];
   ownedProperties: OwnedProperty[];
   lastDiceRoll: DiceRoll | null;
   hasRolledThisTurn: boolean;
-
   winnerId: string | null;
   logs: GameLogEntry[];
 }
