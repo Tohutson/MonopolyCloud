@@ -1,0 +1,1 @@
+export { rollTwoDice } from "../dice";
