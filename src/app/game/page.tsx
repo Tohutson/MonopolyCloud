@@ -1,9 +1,5 @@
-import { GameDebugPanel } from "@/features/components/GameDebugPanel";
+import { GameScreen } from "@/features/components/GameScreen";
 
 export default function GamePage() {
-  return (
-    <main className="p-6">
-      <GameDebugPanel />
-    </main>
-  );
+  return <GameScreen />;
 }
