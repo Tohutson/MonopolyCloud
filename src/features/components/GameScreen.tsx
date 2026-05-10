@@ -14,6 +14,25 @@ export function GameScreen() {
   const currentPlayer = state.players[state.currentPlayerIndex];
   const currentSquare = state.board[currentPlayer.position];
 
+  const ownedProperty =
+    currentSquare.type === "PROPERTY"
+      ? state.ownedProperties.find(
+          (owned) => owned.propertyId === currentSquare.id,
+        )
+      : undefined;
+
+  const propertyOwner = ownedProperty
+    ? (state.players.find((player) => player.id === ownedProperty.ownerId) ??
+      null)
+    : null;
+
+  const canBuy =
+    state.status === "ACTIVE" &&
+    state.hasRolledThisTurn &&
+    currentSquare.type === "PROPERTY" &&
+    !ownedProperty &&
+    currentPlayer.cash >= currentSquare.price;
+
   return (
     <main className="min-h-screen bg-stone-100 px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-[1500px] space-y-5">
@@ -53,6 +72,10 @@ export function GameScreen() {
             <CurrentSquarePanel
               currentPlayer={currentPlayer}
               currentSquare={currentSquare}
+              ownedProperty={ownedProperty}
+              propertyOwner={propertyOwner}
+              canBuy={canBuy}
+              dispatch={dispatch}
             />
             <GameLog entries={state.log} />
           </aside>
