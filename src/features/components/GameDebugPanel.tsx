@@ -72,6 +72,13 @@ export function GameDebugPanel() {
           End Turn
         </button>
       </div>
+      <div>
+        <h3>Log</h3>
+
+        {state.log.map((entry) => (
+          <p key={entry.id}>{entry.message}</p>
+        ))}
+      </div>
     </section>
   );
 }

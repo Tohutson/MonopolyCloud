@@ -7,6 +7,7 @@ import { calculateNewPosition } from "./movement";
 const PASS_GO_REWARD = 200;
 const INCOME_TAX_AMOUNT = 200;
 const LUXURY_TAX_AMOUNT = 100;
+const JAIL_POSITION = 10;
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -169,10 +170,11 @@ function resolveLandedSquare(state: GameState): GameState {
       };
 
     case "GO_TO_JAIL":
-      return {
-        ...state,
-        log: addLog(state, `${currentPlayer.name} is going to jail!`),
-      };
+      return moveCurrentPlayerToPosition(
+        state,
+        JAIL_POSITION,
+        `${currentPlayer.name} was sent to Jail.`,
+      );
 
     default:
       return state;
@@ -212,6 +214,29 @@ function getTaxAmount(squareId: string): number {
   }
 
   return 0;
+}
+
+function moveCurrentPlayerToPosition(
+  state: GameState,
+  position: number,
+  message: string,
+): GameState {
+  const updatedPlayers = state.players.map((player, index) => {
+    if (index !== state.currentPlayerIndex) {
+      return player;
+    }
+
+    return {
+      ...player,
+      position,
+    };
+  });
+
+  return {
+    ...state,
+    players: updatedPlayers,
+    log: addLog(state, message),
+  };
 }
 
 function addLog(state: GameState, message: string) {
