@@ -33,7 +33,7 @@ export function payRent(
   amount: number,
   propertyName: string,
 ): GameState {
-  const updatedPlayers = state.players.map((player, index) => {
+  const updatedPlayers = state.players.map((player) => {
     if (player.id === payerId) {
       return {
         ...player,
