@@ -9,6 +9,8 @@ import { addLog } from "./logging";
 import { chargeCurrentPlayer, payRent } from "./payments";
 import { getPropertyOwnerId } from "./ownership";
 import { calculateRentForProperty } from "./rent";
+import { moveCurrentPlayerToPosition } from "./movement";
+import { applyChanceCard, applyCommunityChestCard } from "./cards";
 
 export function resolveLandedSquare(state: GameState): GameState {
   const currentPlayer = state.players[state.currentPlayerIndex];
@@ -68,19 +70,10 @@ export function resolveLandedSquare(state: GameState): GameState {
     }
 
     case "CHANCE":
-      return {
-        ...state,
-        log: addLog(
-          state,
-          `${currentPlayer.name} landed on Chance. (No card effects implemented yet)`,
-        ),
-      };
+      return applyChanceCard(state);
 
     case "COMMUNITY_CHEST":
-      return {
-        ...state,
-        log: addLog(state, `${currentPlayer.name} landed on Community Chest.`),
-      };
+      return applyCommunityChestCard(state);
 
     case "FREE_PARKING":
       return {
@@ -116,27 +109,4 @@ function getTaxAmount(squareId: string): number {
   }
 
   return 0;
-}
-
-function moveCurrentPlayerToPosition(
-  state: GameState,
-  position: number,
-  message: string,
-): GameState {
-  const updatedPlayers = state.players.map((player, index) => {
-    if (index !== state.currentPlayerIndex) {
-      return player;
-    }
-
-    return {
-      ...player,
-      position,
-    };
-  });
-
-  return {
-    ...state,
-    players: updatedPlayers,
-    log: addLog(state, message),
-  };
 }

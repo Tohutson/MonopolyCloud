@@ -1,6 +1,6 @@
 import { GameState } from "../../types/game";
 import { rollTwoDice } from "@/features/engine/rules/dice";
-import { calculateNewPosition } from "../movement";
+import { calculateNewPosition } from "@/features/engine/rules/movement";
 import { PASS_GO_REWARD } from "../rules/constants";
 import { addLog } from "../rules/logging";
 import { resolveLandedSquare } from "../rules/squareResolution";

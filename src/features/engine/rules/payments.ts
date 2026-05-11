@@ -24,6 +24,29 @@ export function chargeCurrentPlayer(
   };
 }
 
+export function payCurrentPlayer(
+  state: GameState,
+  amount: number,
+  message: string,
+): GameState {
+  const updatedPlayers = state.players.map((player, index) => {
+    if (index !== state.currentPlayerIndex) {
+      return player;
+    }
+
+    return {
+      ...player,
+      cash: player.cash + amount,
+    };
+  });
+
+  return {
+    ...state,
+    players: updatedPlayers,
+    log: addLog(state, message),
+  };
+}
+
 export function payRent(
   state: GameState,
   payerId: string,
