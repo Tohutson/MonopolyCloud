@@ -1,5 +1,5 @@
 import { board } from "../../data/board";
-import { BoardSquare } from "../../types/board";
+import { BoardSquare, PropertySquare } from "../../types/board";
 import { GameState } from "../../types/game";
 import { PlayerStatus } from "../../types/player";
 import { createInitialGame } from "../createInitialGame";
@@ -88,11 +88,35 @@ export function markTurnRolled(state: GameState): GameState {
   };
 }
 
+export function setLastDiceRoll(state: GameState, total: number): GameState {
+  const die1 = Math.min(6, Math.max(1, total - 1));
+  const die2 = total - die1;
+
+  return {
+    ...state,
+    lastDiceRoll: {
+      die1,
+      die2,
+      total,
+    },
+  };
+}
+
 export function squareById(squareId: string): BoardSquare {
   const square = board.find((candidate) => candidate.id === squareId);
 
   if (!square) {
     throw new Error(`Could not find test square: ${squareId}`);
+  }
+
+  return square;
+}
+
+export function propertySquareById(squareId: string): PropertySquare {
+  const square = squareById(squareId);
+
+  if (square.type !== "PROPERTY") {
+    throw new Error(`Test square is not a property: ${squareId}`);
   }
 
   return square;

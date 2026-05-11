@@ -12,7 +12,7 @@ export function calculateRentForProperty(
       ownerId,
       "railroad",
     );
-    return property.rent * railroadCount;
+    return property.rent * 2 ** Math.max(0, railroadCount - 1);
   }
   if (property.colorGroup === "utility") {
     const diceRoll = state.lastDiceRoll;
