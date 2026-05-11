@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rollTwoDice } from "../dice";
+import { rollTwoDice } from "../rules/dice";
 
 describe("rollTwoDice", () => {
   it("returns two dice between 1 and 6 with a matching total", () => {

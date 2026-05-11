@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createInitialGame } from "../createInitialGame";
-import { rollTwoDice } from "../dice";
+import { rollTwoDice } from "@/features/engine/rules/dice";
 import { gameReducer } from "../gameReducer";
 import { getPropertyOwnerId } from "../rules/ownership";
+import { checkWinCondition } from "../rules/winConditions";
 import {
   createActiveGameForTest,
   markPropertyOwned,
@@ -13,7 +14,7 @@ import {
   setCurrentPlayerStatus,
 } from "./testUtils";
 
-vi.mock("../dice", () => ({
+vi.mock("@/features/engine/rules/dice", () => ({
   rollTwoDice: vi.fn(),
 }));
 
@@ -53,6 +54,23 @@ describe("gameReducer", () => {
       expect(nextState.status).toBe("ACTIVE");
       expect(nextState.log).toHaveLength(activeState.log.length + 1);
       expect(nextState.log[0].message).toBe("Game started.");
+    });
+
+    it("does not restart a finished game", () => {
+      const finishedState = checkWinCondition({
+        ...createActiveGameForTest(),
+        players: createActiveGameForTest().players.map((player, index) =>
+          index === 0 ? { ...player, cash: -1 } : player,
+        ),
+      });
+
+      const nextState = gameReducer(finishedState, {
+        type: "START_GAME",
+      });
+
+      expect(nextState).toBe(finishedState);
+      expect(nextState.status).toBe("FINISHED");
+      expect(nextState.winnerId).toBe("player-2");
     });
   });
 
@@ -156,6 +174,22 @@ describe("gameReducer", () => {
       expect(nextState).toBe(state);
       expect(mockedRollTwoDice).not.toHaveBeenCalled();
     });
+
+    it("does nothing after the game is finished", () => {
+      const finishedState = checkWinCondition({
+        ...setCurrentPlayerPosition(createActiveGameForTest(), 38),
+        players: createActiveGameForTest().players.map((player, index) =>
+          index === 0 ? { ...player, cash: -1, position: 38 } : player,
+        ),
+      });
+
+      const nextState = gameReducer(finishedState, {
+        type: "ROLL_DICE",
+      });
+
+      expect(nextState).toBe(finishedState);
+      expect(mockedRollTwoDice).not.toHaveBeenCalled();
+    });
   });
 
   describe("END_TURN", () => {
@@ -193,6 +227,24 @@ describe("gameReducer", () => {
 
       expect(nextState.currentPlayerIndex).toBe(0);
       expect(nextState.log[0].message).toBe("Player 1's turn started.");
+    });
+
+    it("does nothing after the game is finished", () => {
+      const finishedState = markTurnRolled(
+        checkWinCondition({
+          ...createActiveGameForTest(),
+          players: createActiveGameForTest().players.map((player, index) =>
+            index === 0 ? { ...player, cash: -1 } : player,
+          ),
+        }),
+      );
+
+      const nextState = gameReducer(finishedState, {
+        type: "END_TURN",
+      });
+
+      expect(nextState).toBe(finishedState);
+      expect(nextState.currentPlayerIndex).toBe(0);
     });
   });
 
@@ -289,6 +341,23 @@ describe("gameReducer", () => {
       expect(nextState.log[0].message).toBe(
         "Player 1 cannot afford Mediterranean Avenue.",
       );
+    });
+
+    it("does nothing after the game is finished", () => {
+      const finishedState = checkWinCondition({
+        ...setCurrentPlayerPosition(createActiveGameForTest(), 1),
+        players: createActiveGameForTest().players.map((player, index) =>
+          index === 0 ? { ...player, cash: -1, position: 1 } : player,
+        ),
+      });
+
+      const nextState = gameReducer(finishedState, {
+        type: "BUY_PROPERTY",
+        propertyId: "mediterranean-avenue",
+      });
+
+      expect(nextState).toBe(finishedState);
+      expect(nextState.ownedProperties).toEqual([]);
     });
   });
 });
