@@ -3,6 +3,7 @@ import { resolveLandedSquare } from "../rules/squareResolution";
 import {
   createActiveGameForTest,
   markPropertyOwned,
+  setLastDiceRoll,
   setCurrentPlayerPosition,
 } from "./testUtils";
 
@@ -80,24 +81,133 @@ describe("resolveLandedSquare", () => {
     );
   });
 
-  it("logs Chance without applying a card effect", () => {
+  it("charges calculated railroad rent when landing on an opponent-owned railroad", () => {
+    const state = markPropertyOwned(
+      markPropertyOwned(
+        markPropertyOwned(
+          setCurrentPlayerPosition(createActiveGameForTest(), 5),
+          "reading-railroad",
+          "player-2",
+        ),
+        "pennsylvania-railroad",
+        "player-2",
+      ),
+      "b-and-o-railroad",
+      "player-2",
+    );
+
+    const nextState = resolveLandedSquare(state);
+
+    expect(nextState.players[0].cash).toBe(1400);
+    expect(nextState.players[1].cash).toBe(1600);
+    expect(nextState.log[0].message).toBe(
+      "Player 1 paid $100 rent to Player 2 for Reading Railroad.",
+    );
+  });
+
+  it("charges calculated utility rent when landing on an opponent-owned utility", () => {
+    const state = setLastDiceRoll(
+      markPropertyOwned(
+        markPropertyOwned(
+          setCurrentPlayerPosition(createActiveGameForTest(), 12),
+          "electric-company",
+          "player-2",
+        ),
+        "water-works",
+        "player-2",
+      ),
+      7,
+    );
+
+    const nextState = resolveLandedSquare(state);
+
+    expect(nextState.players[0].cash).toBe(1430);
+    expect(nextState.players[1].cash).toBe(1570);
+    expect(nextState.log[0].message).toBe(
+      "Player 1 paid $70 rent to Player 2 for Electric Company.",
+    );
+  });
+
+  it("does not charge rent on the current player's own railroad", () => {
+    const state = markPropertyOwned(
+      setCurrentPlayerPosition(createActiveGameForTest(), 5),
+      "reading-railroad",
+      "player-1",
+    );
+
+    const nextState = resolveLandedSquare(state);
+
+    expect(nextState.players[0].cash).toBe(1500);
+    expect(nextState.players[1].cash).toBe(1500);
+    expect(nextState.log[0].message).toBe(
+      "Player 1 landed on their own property, Reading Railroad.",
+    );
+  });
+
+  it("does not charge rent on the current player's own utility", () => {
+    const state = setLastDiceRoll(
+      markPropertyOwned(
+        setCurrentPlayerPosition(createActiveGameForTest(), 12),
+        "electric-company",
+        "player-1",
+      ),
+      7,
+    );
+
+    const nextState = resolveLandedSquare(state);
+
+    expect(nextState.players[0].cash).toBe(1500);
+    expect(nextState.players[1].cash).toBe(1500);
+    expect(nextState.log[0].message).toBe(
+      "Player 1 landed on their own property, Electric Company.",
+    );
+  });
+
+  it("logs availability for an unowned railroad", () => {
+    const state = setCurrentPlayerPosition(createActiveGameForTest(), 5);
+
+    const nextState = resolveLandedSquare(state);
+
+    expect(nextState.players[0].cash).toBe(1500);
+    expect(nextState.players[1].cash).toBe(1500);
+    expect(nextState.log[0].message).toBe(
+      "Player 1 landed on Reading Railroad. It is available for $200.",
+    );
+  });
+
+  it("logs availability for an unowned utility", () => {
+    const state = setLastDiceRoll(
+      setCurrentPlayerPosition(createActiveGameForTest(), 12),
+      7,
+    );
+
+    const nextState = resolveLandedSquare(state);
+
+    expect(nextState.players[0].cash).toBe(1500);
+    expect(nextState.players[1].cash).toBe(1500);
+    expect(nextState.log[0].message).toBe(
+      "Player 1 landed on Electric Company. It is available for $150.",
+    );
+  });
+
+  it("applies Chance card behavior without depending on the random card", () => {
     const state = setCurrentPlayerPosition(createActiveGameForTest(), 7);
 
     const nextState = resolveLandedSquare(state);
 
-    expect(nextState.log[0].message).toBe(
-      "Player 1 landed on Chance. (No card effects implemented yet)",
-    );
+    expect(nextState.players).toHaveLength(state.players.length);
+    expect(nextState.log).toHaveLength(state.log.length + 1);
+    expect(nextState.log[0].message).toContain("Player 1 drew a card:");
   });
 
-  it("logs Community Chest without applying a card effect", () => {
+  it("applies Community Chest card behavior without depending on the random card", () => {
     const state = setCurrentPlayerPosition(createActiveGameForTest(), 2);
 
     const nextState = resolveLandedSquare(state);
 
-    expect(nextState.log[0].message).toBe(
-      "Player 1 landed on Community Chest.",
-    );
+    expect(nextState.players).toHaveLength(state.players.length);
+    expect(nextState.log).toHaveLength(state.log.length + 1);
+    expect(nextState.log[0].message).toContain("Player 1 drew a card:");
   });
 
   it("logs Free Parking", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { calculateNewPosition } from "../movement";
+import { calculateNewPosition } from "../rules/movement";
 
 describe("calculateNewPosition", () => {
   it("moves without passing start", () => {

@@ -113,13 +113,13 @@ describe("gameReducer", () => {
     });
 
     it("rolls dice, moves the current player, stores the roll, and marks the turn rolled", () => {
-      const state = createActiveGameForTest();
+      const state = setCurrentPlayerPosition(createActiveGameForTest(), 1);
 
       const nextState = gameReducer(state, {
         type: "ROLL_DICE",
       });
 
-      expect(nextState.players[0].position).toBe(2);
+      expect(nextState.players[0].position).toBe(3);
       expect(nextState.players[1].position).toBe(0);
       expect(nextState.lastDiceRoll).toEqual({
         die1: 1,
@@ -131,9 +131,12 @@ describe("gameReducer", () => {
     });
 
     it("does not move a second time in the same turn", () => {
-      const state = gameReducer(createActiveGameForTest(), {
-        type: "ROLL_DICE",
-      });
+      const state = gameReducer(
+        setCurrentPlayerPosition(createActiveGameForTest(), 1),
+        {
+          type: "ROLL_DICE",
+        },
+      );
 
       mockedRollTwoDice.mockReturnValue({
         die1: 3,
@@ -146,7 +149,7 @@ describe("gameReducer", () => {
       });
 
       expect(nextState).toBe(state);
-      expect(nextState.players[0].position).toBe(2);
+      expect(nextState.players[0].position).toBe(3);
       expect(mockedRollTwoDice).toHaveBeenCalledTimes(1);
     });
 
@@ -161,6 +164,41 @@ describe("gameReducer", () => {
       expect(nextState.players[0].cash).toBe(1700);
       expect(nextState.log[0].message).toBe(
         "Player 1 passed Start and collected $200.",
+      );
+    });
+
+    it("can finish the game when utility rent bankrupts the current player", () => {
+      mockedRollTwoDice.mockReturnValue({
+        die1: 3,
+        die2: 4,
+        total: 7,
+      });
+
+      const state = markPropertyOwned(
+        markPropertyOwned(
+          setCurrentPlayerCash(
+            setCurrentPlayerPosition(createActiveGameForTest(), 5),
+            69,
+          ),
+          "electric-company",
+          "player-2",
+        ),
+        "water-works",
+        "player-2",
+      );
+
+      const nextState = gameReducer(state, {
+        type: "ROLL_DICE",
+      });
+
+      expect(nextState.players[0].cash).toBe(-1);
+      expect(nextState.players[0].status).toBe("BANKRUPT");
+      expect(nextState.players[1].cash).toBe(1570);
+      expect(nextState.status).toBe("FINISHED");
+      expect(nextState.winnerId).toBe("player-2");
+      expect(nextState.log[0].message).toBe("Player 2 wins the game!");
+      expect(nextState.log[1].message).toBe(
+        "Player 1 paid $70 rent to Player 2 for Electric Company.",
       );
     });
 
