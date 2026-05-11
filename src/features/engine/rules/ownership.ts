@@ -10,3 +10,11 @@ export function getPropertyOwnerId(
 
   return ownedProperty?.ownerId ?? null;
 }
+
+export function isPropertyOwnedByCurrentPlayer(
+  state: GameState,
+  propertyId: string,
+): boolean {
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  return getPropertyOwnerId(state, propertyId) === currentPlayer.id;
+}

@@ -6,7 +6,8 @@ import {
   PASS_GO_REWARD,
 } from "./constants";
 import { addLog } from "./logging";
-import { chargeCurrentPlayer } from "./payments";
+import { chargeCurrentPlayer, payRent } from "./payments";
+import { getPropertyOwnerId } from "./ownership";
 
 export function resolveLandedSquare(state: GameState): GameState {
   const currentPlayer = state.players[state.currentPlayerIndex];
@@ -22,14 +23,38 @@ export function resolveLandedSquare(state: GameState): GameState {
         ),
       };
 
-    case "PROPERTY":
-      return {
-        ...state,
-        log: addLog(
-          state,
-          `${currentPlayer.name} landed on ${square.name} (Property).`,
-        ),
-      };
+    case "PROPERTY": {
+      const ownerId = getPropertyOwnerId(state, square.id);
+
+      if (!ownerId) {
+        return {
+          ...state,
+          log: addLog(
+            state,
+            `${currentPlayer.name} landed on ${square.name}. It is available for $${square.price}.`,
+          ),
+        };
+      }
+      if (ownerId === currentPlayer.id) {
+        return {
+          ...state,
+          log: addLog(
+            state,
+            `${currentPlayer.name} landed on their own property, ${square.name}.`,
+          ),
+        };
+      }
+
+      return payRent(
+        state,
+        currentPlayer.id,
+        ownerId,
+        currentPlayer.name,
+        state.players.find((p) => p.id === ownerId)?.name ?? "Unknown",
+        square.rent,
+        square.name,
+      );
+    }
 
     case "TAX": {
       const taxAmount = getTaxAmount(square.id);

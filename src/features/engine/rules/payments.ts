@@ -23,3 +23,40 @@ export function chargeCurrentPlayer(
     log: addLog(state, message),
   };
 }
+
+export function payRent(
+  state: GameState,
+  payerId: string,
+  ownerId: string,
+  payerName: string,
+  ownerName: string,
+  amount: number,
+  propertyName: string,
+): GameState {
+  const updatedPlayers = state.players.map((player, index) => {
+    if (player.id === payerId) {
+      return {
+        ...player,
+        cash: player.cash - amount,
+      };
+    }
+
+    if (player.id === ownerId) {
+      return {
+        ...player,
+        cash: player.cash + amount,
+      };
+    }
+
+    return player;
+  });
+
+  return {
+    ...state,
+    players: updatedPlayers,
+    log: addLog(
+      state,
+      `${payerName} paid $${amount} rent to ${ownerName} for ${propertyName}.`,
+    ),
+  };
+}
