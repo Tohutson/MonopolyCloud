@@ -1,9 +1,10 @@
 import { GameState } from "../../types/game";
-import { rollTwoDice } from "../dice";
+import { rollTwoDice } from "@/features/engine/rules/dice";
 import { calculateNewPosition } from "../movement";
 import { PASS_GO_REWARD } from "../rules/constants";
 import { addLog } from "../rules/logging";
 import { resolveLandedSquare } from "../rules/squareResolution";
+import { checkWinCondition } from "../rules/winConditions";
 
 export function rollDiceAction(state: GameState): GameState {
   if (state.status !== "ACTIVE") {
@@ -54,5 +55,6 @@ export function rollDiceAction(state: GameState): GameState {
     ),
   };
 
-  return resolveLandedSquare(nextState);
+  const resolvedState = resolveLandedSquare(nextState);
+  return checkWinCondition(resolvedState);
 }
