@@ -8,6 +8,7 @@ import {
 import { addLog } from "./logging";
 import { chargeCurrentPlayer, payRent } from "./payments";
 import { getPropertyOwnerId } from "./ownership";
+import { calculateRentForProperty } from "./rent";
 
 export function resolveLandedSquare(state: GameState): GameState {
   const currentPlayer = state.players[state.currentPlayerIndex];
@@ -51,7 +52,7 @@ export function resolveLandedSquare(state: GameState): GameState {
         ownerId,
         currentPlayer.name,
         state.players.find((p) => p.id === ownerId)?.name ?? "Unknown",
-        square.rent,
+        calculateRentForProperty(state, square, ownerId),
         square.name,
       );
     }
