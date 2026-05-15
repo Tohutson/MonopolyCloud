@@ -5,6 +5,11 @@ import { buyPropertyAction } from "./actions/buyPropertyAction";
 import { endTurnAction } from "./actions/endTurnAction";
 import { rollDiceAction } from "./actions/rollDiceAction";
 import { startGameAction } from "./actions/startGameAction";
+import {
+  payToLeaveJail,
+  useGetOutOfJailCard,
+  attemptJailRoll,
+} from "./actions/jailActions";
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -22,6 +27,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "RESET_GAME":
       return createInitialGame();
+
+    case "PAY_TO_LEAVE_JAIL":
+      return payToLeaveJail(state);
+
+    case "USE_JAIL_CARD":
+      return useGetOutOfJailCard(state);
+
+    case "ROLL_FOR_JAIL_RELEASE":
+      return attemptJailRoll(state);
 
     default:
       return state;

@@ -11,12 +11,14 @@ export function createInitialGame(): GameState {
       {
         id: "player-1",
         name: "Player 1",
-
         cash: 1500,
-
         position: 0,
-
         status: "ACTIVE",
+        jailState: {
+          isInJail: false,
+          turnsAttempted: 0,
+          getOutOfJailFreeCards: 0,
+        },
       },
       {
         id: "player-2",
@@ -24,6 +26,11 @@ export function createInitialGame(): GameState {
         cash: 1500,
         position: 0,
         status: "ACTIVE",
+        jailState: {
+          isInJail: false,
+          turnsAttempted: 0,
+          getOutOfJailFreeCards: 0,
+        },
       },
     ],
 

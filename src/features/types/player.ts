@@ -6,4 +6,11 @@ export interface Player {
   cash: number;
   position: number;
   status: PlayerStatus;
+  jailState: JailState;
+}
+
+export interface JailState {
+  isInJail: boolean;
+  turnsAttempted: number;
+  getOutOfJailFreeCards: number;
 }

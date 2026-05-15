@@ -6,6 +6,7 @@ import { GameBoard } from "./GameBoard";
 import { GameLog } from "./GameLog";
 import { PlayerPanel } from "./PlayerPanel";
 import { TurnControls } from "./TurnControls";
+import { JailControls } from "./JailControls";
 
 export function GameScreen() {
   const state = useGameStore((store) => store.state);
@@ -32,6 +33,7 @@ export function GameScreen() {
     currentSquare.type === "PROPERTY" &&
     !ownedProperty &&
     currentPlayer.cash >= currentSquare.price;
+  const isInJail = currentPlayer.jailState.isInJail;
 
   return (
     <main className="min-h-screen bg-stone-100 px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
@@ -67,7 +69,11 @@ export function GameScreen() {
           </section>
 
           <aside className="space-y-4 xl:max-h-[calc(100vh-150px)] xl:overflow-y-auto xl:pr-1">
-            <TurnControls state={state} dispatch={dispatch} />
+            {isInJail ? (
+              <JailControls state={state} dispatch={dispatch} />
+            ) : (
+              <TurnControls state={state} dispatch={dispatch} />
+            )}
             <PlayerPanel state={state} />
             <CurrentSquarePanel
               currentPlayer={currentPlayer}
