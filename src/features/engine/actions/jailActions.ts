@@ -11,13 +11,17 @@ export function payToLeaveJail(state: GameState): GameState {
     return state;
   }
 
+  if (state.hasRolledThisTurn) {
+    return state;
+  }
+
   const currentPlayer = state.players[state.currentPlayerIndex];
 
   if (!currentPlayer.jailState.isInJail) {
     return state;
   }
 
-  if (currentPlayer.cash < 50) {
+  if (currentPlayer.cash < JAIL_FINE) {
     return {
       ...state,
       log: addLog(
@@ -34,10 +38,11 @@ export function payToLeaveJail(state: GameState): GameState {
 
     return {
       ...player,
-      cash: player.cash - 50,
+      cash: player.cash - JAIL_FINE,
       jailState: {
         ...player.jailState,
         isInJail: false,
+        turnsAttempted: 0,
       },
     };
   });
@@ -54,10 +59,22 @@ export function payToLeaveJail(state: GameState): GameState {
   };
 }
 
-export function useGetOutOfJailCard(state: GameState): GameState {
+export function playGetOutOfJailCard(state: GameState): GameState {
+  if (state.status !== "ACTIVE") {
+    return state;
+  }
+
+  if (state.hasRolledThisTurn) {
+    return state;
+  }
+
   const currentPlayer = state.players[state.currentPlayerIndex];
 
   if (!currentPlayer.jailState.isInJail) {
+    return state;
+  }
+
+  if (currentPlayer.jailState.getOutOfJailFreeCards <= 0) {
     return state;
   }
 
@@ -71,6 +88,7 @@ export function useGetOutOfJailCard(state: GameState): GameState {
       jailState: {
         ...player.jailState,
         isInJail: false,
+        turnsAttempted: 0,
         getOutOfJailFreeCards: player.jailState.getOutOfJailFreeCards - 1,
       },
     };
@@ -89,7 +107,19 @@ export function useGetOutOfJailCard(state: GameState): GameState {
 }
 
 export function attemptJailRoll(state: GameState): GameState {
+  if (state.status !== "ACTIVE") {
+    return state;
+  }
+
+  if (state.hasRolledThisTurn) {
+    return state;
+  }
+
   const currentPlayer = state.players[state.currentPlayerIndex];
+
+  if (currentPlayer.status !== "ACTIVE") {
+    return state;
+  }
 
   if (!currentPlayer.jailState.isInJail) {
     return state;

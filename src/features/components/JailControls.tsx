@@ -1,5 +1,6 @@
 import { GameAction } from "../types/actions";
 import { GameState } from "../types/game";
+import { JAIL_FINE, MAX_JAIL_ATTEMPTS } from "../engine/rules/constants";
 
 interface JailControlsProps {
   state: GameState;
@@ -14,11 +15,12 @@ export function JailControls({ state, dispatch }: JailControlsProps) {
     currentPlayer.jailState.isInJail &&
     !state.hasRolledThisTurn;
 
-  const canPayFine = canAct && currentPlayer.cash >= 50;
+  const canPayFine = canAct && currentPlayer.cash >= JAIL_FINE;
 
   const canUseCard =
     canAct && currentPlayer.jailState.getOutOfJailFreeCards > 0;
 
+  const canRollForRelease = canAct;
   const canEndTurn = state.status === "ACTIVE" && state.hasRolledThisTurn;
 
   return (
@@ -37,7 +39,8 @@ export function JailControls({ state, dispatch }: JailControlsProps) {
           <strong>{currentPlayer.name}</strong> is in Jail.
         </p>
         <p className="text-slate-600">
-          Attempts: {currentPlayer.jailState.turnsAttempted} / 3
+          Attempts: {currentPlayer.jailState.turnsAttempted} /{" "}
+          {MAX_JAIL_ATTEMPTS}
         </p>
       </div>
       <div className="mt-4 grid gap-2">
@@ -46,18 +49,18 @@ export function JailControls({ state, dispatch }: JailControlsProps) {
           disabled={!canPayFine}
           onClick={() => dispatch({ type: "PAY_TO_LEAVE_JAIL" })}
         >
-          Pay $50 to Leave Jail
+          Pay ${JAIL_FINE} to Leave Jail
         </button>
         <button
           className="w-full rounded border border-slate-950 bg-amber-500 px-3 py-2 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
           disabled={!canUseCard}
           onClick={() => dispatch({ type: "USE_JAIL_CARD" })}
         >
-          Use "Get Out of Jail Free" Card
+          Use Get Out of Jail Free Card
         </button>
         <button
           className="w-full rounded border border-slate-950 bg-amber-500 px-3 py-2 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
-          disabled={!canEndTurn}
+          disabled={!canRollForRelease}
           onClick={() => dispatch({ type: "ROLL_FOR_JAIL_RELEASE" })}
         >
           Roll for Doubles to Try to Leave Jail

@@ -78,6 +78,8 @@ describe("card rules", () => {
     const nextState = applyCardEffect(state, card);
 
     expect(nextState.players[0].position).toBe(JAIL_POSITION);
+    expect(nextState.players[0].jailState.isInJail).toBe(true);
+    expect(nextState.players[0].jailState.turnsAttempted).toBe(0);
     expect(nextState.players[0].cash).toBe(1500);
     expect(nextState.players[1]).toEqual(state.players[1]);
     expect(nextState.log[0].message).toBe(

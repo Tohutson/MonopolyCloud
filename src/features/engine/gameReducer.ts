@@ -7,7 +7,7 @@ import { rollDiceAction } from "./actions/rollDiceAction";
 import { startGameAction } from "./actions/startGameAction";
 import {
   payToLeaveJail,
-  useGetOutOfJailCard,
+  playGetOutOfJailCard,
   attemptJailRoll,
 } from "./actions/jailActions";
 
@@ -32,7 +32,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return payToLeaveJail(state);
 
     case "USE_JAIL_CARD":
-      return useGetOutOfJailCard(state);
+      return playGetOutOfJailCard(state);
 
     case "ROLL_FOR_JAIL_RELEASE":
       return attemptJailRoll(state);

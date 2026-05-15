@@ -1,7 +1,6 @@
 import { GameState } from "../../types/game";
 import {
   INCOME_TAX_AMOUNT,
-  JAIL_POSITION,
   LUXURY_TAX_AMOUNT,
   PASS_GO_REWARD,
 } from "./constants";
@@ -9,8 +8,8 @@ import { addLog } from "./logging";
 import { chargeCurrentPlayer, payRent } from "./payments";
 import { getPropertyOwnerId } from "./ownership";
 import { calculateRentForProperty } from "./rent";
-import { moveCurrentPlayerToPosition } from "./movement";
 import { applyChanceCard, applyCommunityChestCard } from "./cards";
+import { sendCurrentPlayerToJail } from "./jail";
 
 export function resolveLandedSquare(state: GameState): GameState {
   const currentPlayer = state.players[state.currentPlayerIndex];
@@ -88,11 +87,7 @@ export function resolveLandedSquare(state: GameState): GameState {
       };
 
     case "GO_TO_JAIL":
-      return moveCurrentPlayerToPosition(
-        state,
-        JAIL_POSITION,
-        `${currentPlayer.name} was sent to Jail.`,
-      );
+      return sendCurrentPlayerToJail(state);
 
     default:
       return state;

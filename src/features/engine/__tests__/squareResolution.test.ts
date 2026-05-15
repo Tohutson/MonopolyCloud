@@ -233,6 +233,8 @@ describe("resolveLandedSquare", () => {
     const nextState = resolveLandedSquare(state);
 
     expect(nextState.players[0].position).toBe(10);
-    expect(nextState.log[0].message).toBe("Player 1 was sent to Jail.");
+    expect(nextState.players[0].jailState.isInJail).toBe(true);
+    expect(nextState.players[0].jailState.turnsAttempted).toBe(0);
+    expect(nextState.log[0].message).toBe("Player 1 is sent to jail!");
   });
 });

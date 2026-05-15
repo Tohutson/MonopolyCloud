@@ -1,22 +1,20 @@
 import { GameState } from "@/features/types/game";
 import { JAIL_FINE, JAIL_POSITION } from "./constants";
-import { moveCurrentPlayerToPosition } from "./movement";
 import { addLog } from "./logging";
 
-export function sendCurrentPlayerToJail(state: GameState): GameState {
+export function sendCurrentPlayerToJail(
+  state: GameState,
+  message?: string,
+): GameState {
   const currentPlayer = state.players[state.currentPlayerIndex];
-  const nextState = moveCurrentPlayerToPosition(
-    state,
-    JAIL_POSITION,
-    `${currentPlayer.name} is moved to jail!`,
-  );
 
   return {
-    ...nextState,
-    players: nextState.players.map((player, index) =>
-      index === nextState.currentPlayerIndex
+    ...state,
+    players: state.players.map((player, index) =>
+      index === state.currentPlayerIndex
         ? {
             ...player,
+            position: JAIL_POSITION,
             jailState: {
               ...player.jailState,
               isInJail: true,
@@ -25,7 +23,7 @@ export function sendCurrentPlayerToJail(state: GameState): GameState {
           }
         : player,
     ),
-    log: addLog(nextState, `${currentPlayer.name} is sent to jail!`),
+    log: addLog(state, message ?? `${currentPlayer.name} is sent to jail!`),
   };
 }
 

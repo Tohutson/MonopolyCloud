@@ -4,8 +4,8 @@ import {
   chargeCurrentPlayer,
   payCurrentPlayer,
 } from "@/features/engine/rules/payments";
-import { JAIL_POSITION } from "./constants";
 import { moveCurrentPlayerToPosition } from "@/features/engine/rules/movement";
+import { sendCurrentPlayerToJail } from "./jail";
 
 const chanceCards: CardEffect[] = [
   {
@@ -93,9 +93,8 @@ export function applyCardEffect(state: GameState, card: CardEffect): GameState {
       );
 
     case "GO_TO_JAIL":
-      return moveCurrentPlayerToPosition(
+      return sendCurrentPlayerToJail(
         state,
-        JAIL_POSITION,
         `${state.players[state.currentPlayerIndex].name} drew a card: ${card.message}`,
       );
 
