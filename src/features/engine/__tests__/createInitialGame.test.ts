@@ -15,6 +15,7 @@ describe("createInitialGame", () => {
     expect(state.board).toHaveLength(40);
     expect(state.ownedProperties).toEqual([]);
     expect(state.lastDiceRoll).toBeNull();
+    expect(state.pendingRoll).toBeNull();
     expect(state.hasRolledThisTurn).toBe(false);
     expect(state.winnerId).toBeNull();
     expect(state.log).toEqual([]);

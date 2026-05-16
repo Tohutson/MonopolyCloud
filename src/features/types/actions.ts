@@ -1,6 +1,7 @@
 export type GameAction =
   | { type: "START_GAME" }
   | { type: "ROLL_DICE" }
+  | { type: "RESOLVE_ROLL" }
   | { type: "BUY_PROPERTY"; propertyId: string }
   | { type: "END_TURN" }
   | { type: "PAY_TO_LEAVE_JAIL" }

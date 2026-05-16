@@ -10,6 +10,10 @@ export function buyPropertyAction(
     return state;
   }
 
+  if (state.pendingRoll) {
+    return state;
+  }
+
   const currentPlayer = state.players[state.currentPlayerIndex];
   const currentSquare = state.board[currentPlayer.position];
 

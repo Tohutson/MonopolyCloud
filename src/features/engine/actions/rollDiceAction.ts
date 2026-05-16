@@ -1,6 +1,9 @@
 import { GameState } from "../../types/game";
 import { rollTwoDice } from "@/features/engine/rules/dice";
-import { calculateNewPosition } from "@/features/engine/rules/movement";
+import {
+  calculateNewPosition,
+  getMovementPath,
+} from "@/features/engine/rules/movement";
 import { PASS_GO_REWARD } from "../rules/constants";
 import { addLog } from "../rules/logging";
 import { resolveLandedSquare } from "../rules/squareResolution";
@@ -15,9 +18,17 @@ export function rollDiceAction(state: GameState): GameState {
     return state;
   }
 
+  if (state.pendingRoll) {
+    return state;
+  }
+
   const currentPlayer = state.players[state.currentPlayerIndex];
 
   if (currentPlayer.status !== "ACTIVE") {
+    return state;
+  }
+
+  if (currentPlayer.jailState.isInJail) {
     return state;
   }
 
@@ -29,6 +40,45 @@ export function rollDiceAction(state: GameState): GameState {
     state.board.length,
   );
 
+  return {
+    ...state,
+    lastDiceRoll: diceRoll,
+    pendingRoll: {
+      playerId: currentPlayer.id,
+      startPosition: currentPlayer.position,
+      movementPath: getMovementPath(
+        currentPlayer.position,
+        diceRoll.total,
+        state.board.length,
+      ),
+      finalPosition: movementResult.newPosition,
+      passedStart: movementResult.passedStart,
+    },
+    hasRolledThisTurn: true,
+    log: addLog(
+      state,
+      `${currentPlayer.name} rolled ${diceRoll.die1} + ${diceRoll.die2} = ${diceRoll.total}.`,
+    ),
+  };
+}
+
+export function resolveRollAction(state: GameState): GameState {
+  if (state.status !== "ACTIVE") {
+    return state;
+  }
+
+  const pendingRoll = state.pendingRoll;
+
+  if (!pendingRoll) {
+    return state;
+  }
+
+  const currentPlayer = state.players[state.currentPlayerIndex];
+
+  if (currentPlayer.id !== pendingRoll.playerId) {
+    return state;
+  }
+
   const updatedPlayers = state.players.map((player, index) => {
     if (index !== state.currentPlayerIndex) {
       return player;
@@ -36,9 +86,9 @@ export function rollDiceAction(state: GameState): GameState {
 
     return {
       ...player,
-      position: movementResult.newPosition,
+      position: pendingRoll.finalPosition,
 
-      cash: movementResult.passedStart
+      cash: pendingRoll.passedStart
         ? player.cash + PASS_GO_REWARD
         : player.cash,
     };
@@ -47,12 +97,7 @@ export function rollDiceAction(state: GameState): GameState {
   const nextState: GameState = {
     ...state,
     players: updatedPlayers,
-    lastDiceRoll: diceRoll,
-    hasRolledThisTurn: true,
-    log: addLog(
-      state,
-      `${currentPlayer.name} rolled ${diceRoll.die1} + ${diceRoll.die2} = ${diceRoll.total}.`,
-    ),
+    pendingRoll: null,
   };
 
   const resolvedState = resolveLandedSquare(nextState);

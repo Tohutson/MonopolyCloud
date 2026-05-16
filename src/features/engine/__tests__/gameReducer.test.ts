@@ -112,22 +112,48 @@ describe("gameReducer", () => {
       expect(mockedRollTwoDice).not.toHaveBeenCalled();
     });
 
-    it("rolls dice, moves the current player, stores the roll, and marks the turn rolled", () => {
+    it("rolls dice, stores a pending movement path, and marks the turn rolled", () => {
       const state = setCurrentPlayerPosition(createActiveGameForTest(), 1);
 
       const nextState = gameReducer(state, {
         type: "ROLL_DICE",
       });
 
-      expect(nextState.players[0].position).toBe(3);
+      expect(nextState.players[0].position).toBe(1);
       expect(nextState.players[1].position).toBe(0);
       expect(nextState.lastDiceRoll).toEqual({
         die1: 1,
         die2: 1,
         total: 2,
       });
+      expect(nextState.pendingRoll).toEqual({
+        playerId: "player-1",
+        startPosition: 1,
+        movementPath: [2, 3],
+        finalPosition: 3,
+        passedStart: false,
+      });
       expect(nextState.hasRolledThisTurn).toBe(true);
-      expect(nextState.log[1].message).toBe("Player 1 rolled 1 + 1 = 2.");
+      expect(nextState.log[0].message).toBe("Player 1 rolled 1 + 1 = 2.");
+    });
+
+    it("resolves a pending roll after movement is ready to commit", () => {
+      const rolledState = gameReducer(
+        setCurrentPlayerPosition(createActiveGameForTest(), 1),
+        {
+          type: "ROLL_DICE",
+        },
+      );
+
+      const nextState = gameReducer(rolledState, {
+        type: "RESOLVE_ROLL",
+      });
+
+      expect(nextState.players[0].position).toBe(3);
+      expect(nextState.pendingRoll).toBeNull();
+      expect(nextState.log[0].message).toBe(
+        "Player 1 landed on Baltic Avenue. It is available for $60.",
+      );
     });
 
     it("does not move a second time in the same turn", () => {
@@ -149,15 +175,20 @@ describe("gameReducer", () => {
       });
 
       expect(nextState).toBe(state);
-      expect(nextState.players[0].position).toBe(3);
+      expect(nextState.players[0].position).toBe(1);
       expect(mockedRollTwoDice).toHaveBeenCalledTimes(1);
     });
 
-    it("adds the pass-Go reward when movement wraps around the board", () => {
-      const state = setCurrentPlayerPosition(createActiveGameForTest(), 38);
+    it("adds the pass-Go reward when a pending roll wraps around the board", () => {
+      const state = gameReducer(
+        setCurrentPlayerPosition(createActiveGameForTest(), 38),
+        {
+          type: "ROLL_DICE",
+        },
+      );
 
       const nextState = gameReducer(state, {
-        type: "ROLL_DICE",
+        type: "RESOLVE_ROLL",
       });
 
       expect(nextState.players[0].position).toBe(0);
@@ -187,8 +218,12 @@ describe("gameReducer", () => {
         "player-2",
       );
 
-      const nextState = gameReducer(state, {
+      const rolledState = gameReducer(state, {
         type: "ROLL_DICE",
+      });
+
+      const nextState = gameReducer(rolledState, {
+        type: "RESOLVE_ROLL",
       });
 
       expect(nextState.players[0].cash).toBe(-1);
@@ -228,6 +263,16 @@ describe("gameReducer", () => {
       expect(nextState).toBe(finishedState);
       expect(mockedRollTwoDice).not.toHaveBeenCalled();
     });
+
+    it("does nothing when there is no pending roll to resolve", () => {
+      const state = createActiveGameForTest();
+
+      const nextState = gameReducer(state, {
+        type: "RESOLVE_ROLL",
+      });
+
+      expect(nextState).toBe(state);
+    });
   });
 
   describe("END_TURN", () => {
@@ -239,6 +284,19 @@ describe("gameReducer", () => {
       });
 
       expect(nextState).toBe(state);
+    });
+
+    it("does nothing while a roll is waiting for movement resolution", () => {
+      const state = gameReducer(createActiveGameForTest(), {
+        type: "ROLL_DICE",
+      });
+
+      const nextState = gameReducer(state, {
+        type: "END_TURN",
+      });
+
+      expect(nextState).toBe(state);
+      expect(nextState.currentPlayerIndex).toBe(0);
     });
 
     it("switches to the next player after rolling and resets turn roll state", () => {

@@ -7,10 +7,12 @@ import { GameLog } from "./GameLog";
 import { PlayerPanel } from "./PlayerPanel";
 import { TurnControls } from "./TurnControls";
 import { JailControls } from "./JailControls";
+import { useTurnAnimationController } from "./useTurnAnimationController";
 
 export function GameScreen() {
   const state = useGameStore((store) => store.state);
   const dispatch = useGameStore((store) => store.dispatch);
+  const turnAnimation = useTurnAnimationController(state, dispatch);
 
   const currentPlayer = state.players[state.currentPlayerIndex];
   const currentSquare = state.board[currentPlayer.position];
@@ -30,6 +32,8 @@ export function GameScreen() {
   const canBuy =
     state.status === "ACTIVE" &&
     state.hasRolledThisTurn &&
+    !state.pendingRoll &&
+    !turnAnimation.isAnimatingTurn &&
     currentSquare.type === "PROPERTY" &&
     !ownedProperty &&
     currentPlayer.cash >= currentSquare.price;
@@ -65,14 +69,23 @@ export function GameScreen() {
 
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_390px]">
           <section className="min-w-0">
-            <GameBoard state={state} />
+            <GameBoard
+              state={state}
+              visualPlayerPositions={turnAnimation.visualPlayerPositions}
+            />
           </section>
 
           <aside className="space-y-4 xl:max-h-[calc(100vh-150px)] xl:overflow-y-auto xl:pr-1">
             {isInJail ? (
               <JailControls state={state} dispatch={dispatch} />
             ) : (
-              <TurnControls state={state} dispatch={dispatch} />
+              <TurnControls
+                state={state}
+                dispatch={dispatch}
+                displayedDiceRoll={turnAnimation.displayedDiceRoll}
+                isDiceRolling={turnAnimation.phase === "rolling-dice"}
+                isTurnAnimating={turnAnimation.isAnimatingTurn}
+              />
             )}
             <PlayerPanel state={state} />
             <CurrentSquarePanel

@@ -14,6 +14,14 @@ export interface DiceRoll {
   total: number;
 }
 
+export interface PendingRoll {
+  playerId: string;
+  startPosition: number;
+  movementPath: number[];
+  finalPosition: number;
+  passedStart: boolean;
+}
+
 export interface GameLogEntry {
   id: string;
   message: string;
@@ -27,6 +35,7 @@ export interface GameState {
   board: BoardSquare[];
   ownedProperties: OwnedProperty[];
   lastDiceRoll: DiceRoll | null;
+  pendingRoll: PendingRoll | null;
   hasRolledThisTurn: boolean;
   winnerId: string | null;
   log: GameLogEntry[];

@@ -10,6 +10,10 @@ export function endTurnAction(state: GameState): GameState {
     return state;
   }
 
+  if (state.pendingRoll) {
+    return state;
+  }
+
   const nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
 
   return {

@@ -21,6 +21,16 @@ export function calculateNewPosition(
   };
 }
 
+export function getMovementPath(
+  startPosition: number,
+  spacesToMove: number,
+  boardSize: number,
+): number[] {
+  return Array.from({ length: spacesToMove }, (_, index) => {
+    return (startPosition + index + 1) % boardSize;
+  });
+}
+
 export function moveCurrentPlayerToPosition(
   state: GameState,
   position: number,

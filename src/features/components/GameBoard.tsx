@@ -1,9 +1,11 @@
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import type { BoardSquare } from "../types/board";
 import { GameState } from "../types/game";
 import { Player } from "../types/player";
 
 interface GameBoardProps {
   state: GameState;
+  visualPlayerPositions?: Record<string, number>;
 }
 
 interface PlayerToken {
@@ -111,8 +113,12 @@ function getTokenClass(playerNumber: number, isCurrentPlayer: boolean) {
   return `${baseClass} ${playerClass} ${activeClass}`;
 }
 
-export function GameBoard({ state }: GameBoardProps) {
+export function GameBoard({
+  state,
+  visualPlayerPositions = {},
+}: GameBoardProps) {
   const currentPlayer = state.players[state.currentPlayerIndex];
+  const shouldReduceMotion = useReducedMotion();
 
   function getPlayersOnSquare(squareIndex: number): PlayerToken[] {
     return state.players
@@ -120,7 +126,10 @@ export function GameBoard({ state }: GameBoardProps) {
         player,
         playerNumber: playerIndex + 1,
       }))
-      .filter(({ player }) => player.position === squareIndex);
+      .filter(({ player }) => {
+        const visualPosition = visualPlayerPositions[player.id];
+        return (visualPosition ?? player.position) === squareIndex;
+      });
   }
 
   return (
@@ -140,74 +149,83 @@ export function GameBoard({ state }: GameBoardProps) {
       </div>
 
       <div className="overflow-x-auto">
-        <div className="grid aspect-square min-w-[760px] border-2 border-slate-950 bg-slate-950 [grid-template-columns:1.25fr_repeat(9,minmax(0,1fr))_1.25fr] [grid-template-rows:1.25fr_repeat(9,minmax(0,1fr))_1.25fr]">
-          <div
-            className="col-start-2 col-span-9 row-start-2 row-span-9 m-px flex flex-col items-center justify-center border border-slate-950 bg-stone-50 p-8 text-center"
-          >
-            <p className="text-xs font-semibold uppercase tracking-[0.34em] text-amber-700">
-              Serverless Property Trading
-            </p>
-            <h3 className="mt-3 text-6xl font-black uppercase tracking-wide text-slate-950">
-              Cloudopoly
-            </h3>
-            <div className="mt-5 h-1 w-40 bg-amber-500" />
-            <p className="mt-5 max-w-md text-sm font-medium uppercase tracking-[0.16em] text-slate-600">
-              Roll, collect, invest, and race around the cloud district.
-            </p>
-          </div>
-
-        {state.board.map((square) => {
-          const playersOnSquare = getPlayersOnSquare(square.index);
-          const isCorner = square.index % 10 === 0;
-
-          return (
+        <LayoutGroup id="cloudopoly-board-tokens">
+          <div className="grid aspect-square min-w-[760px] border-2 border-slate-950 bg-slate-950 [grid-template-columns:1.25fr_repeat(9,minmax(0,1fr))_1.25fr] [grid-template-rows:1.25fr_repeat(9,minmax(0,1fr))_1.25fr]">
             <div
-              key={square.id}
-              className={`m-px flex min-h-0 flex-col border border-slate-950 ${getGridPosition(square.index)} ${getSquareTone(square)}`}
+              className="col-start-2 col-span-9 row-start-2 row-span-9 m-px flex flex-col items-center justify-center border border-slate-950 bg-stone-50 p-8 text-center"
             >
-              {square.type === "PROPERTY" && (
-                <div
-                  className={`h-2.5 border-b border-slate-950 ${getPropertyColorClass(square.colorGroup)}`}
-                />
-              )}
-
-              <div className="flex min-h-0 flex-1 flex-col p-1.5">
-                <div className="flex items-start justify-between gap-1">
-                  <p className="text-[10px] font-black leading-none text-slate-500">
-                    {square.index}
-                  </p>
-                  <p className="text-[9px] font-bold uppercase leading-none tracking-wide text-amber-700">
-                    {formatSquareType(square.type)}
-                  </p>
-                </div>
-
-                <p
-                  className={`mt-1 font-black uppercase leading-tight text-slate-950 ${
-                    isCorner ? "text-[13px]" : "text-[10px]"
-                  }`}
-                >
-                  {square.name}
-                </p>
-
-                <div className="mt-auto flex flex-wrap gap-1 pt-1">
-                  {playersOnSquare.map(({ player, playerNumber }) => (
-                    <div
-                      key={player.id}
-                      className={getTokenClass(
-                        playerNumber,
-                        player.id === currentPlayer.id,
-                      )}
-                      title={player.name}
-                    >
-                      P{playerNumber}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <p className="text-xs font-semibold uppercase tracking-[0.34em] text-amber-700">
+                Serverless Property Trading
+              </p>
+              <h3 className="mt-3 text-6xl font-black uppercase tracking-wide text-slate-950">
+                Cloudopoly
+              </h3>
+              <div className="mt-5 h-1 w-40 bg-amber-500" />
+              <p className="mt-5 max-w-md text-sm font-medium uppercase tracking-[0.16em] text-slate-600">
+                Roll, collect, invest, and race around the cloud district.
+              </p>
             </div>
-          );
-        })}
-        </div>
+
+            {state.board.map((square) => {
+              const playersOnSquare = getPlayersOnSquare(square.index);
+              const isCorner = square.index % 10 === 0;
+
+              return (
+                <div
+                  key={square.id}
+                  className={`m-px flex min-h-0 flex-col border border-slate-950 ${getGridPosition(square.index)} ${getSquareTone(square)}`}
+                >
+                  {square.type === "PROPERTY" && (
+                    <div
+                      className={`h-2.5 border-b border-slate-950 ${getPropertyColorClass(square.colorGroup)}`}
+                    />
+                  )}
+
+                  <div className="flex min-h-0 flex-1 flex-col p-1.5">
+                    <div className="flex items-start justify-between gap-1">
+                      <p className="text-[10px] font-black leading-none text-slate-500">
+                        {square.index}
+                      </p>
+                      <p className="text-[9px] font-bold uppercase leading-none tracking-wide text-amber-700">
+                        {formatSquareType(square.type)}
+                      </p>
+                    </div>
+
+                    <p
+                      className={`mt-1 font-black uppercase leading-tight text-slate-950 ${
+                        isCorner ? "text-[13px]" : "text-[10px]"
+                      }`}
+                    >
+                      {square.name}
+                    </p>
+
+                    <div className="mt-auto flex flex-wrap gap-1 pt-1">
+                      {playersOnSquare.map(({ player, playerNumber }) => (
+                        <motion.div
+                          key={player.id}
+                          layoutId={`player-token-${player.id}`}
+                          className={getTokenClass(
+                            playerNumber,
+                            player.id === currentPlayer.id,
+                          )}
+                          transition={{
+                            type: "spring",
+                            stiffness: 520,
+                            damping: 36,
+                          }}
+                          layout={!shouldReduceMotion}
+                          title={player.name}
+                        >
+                          P{playerNumber}
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </LayoutGroup>
       </div>
     </section>
   );

@@ -11,6 +11,10 @@ export function payToLeaveJail(state: GameState): GameState {
     return state;
   }
 
+  if (state.pendingRoll) {
+    return state;
+  }
+
   if (state.hasRolledThisTurn) {
     return state;
   }
@@ -64,6 +68,10 @@ export function playGetOutOfJailCard(state: GameState): GameState {
     return state;
   }
 
+  if (state.pendingRoll) {
+    return state;
+  }
+
   if (state.hasRolledThisTurn) {
     return state;
   }
@@ -108,6 +116,10 @@ export function playGetOutOfJailCard(state: GameState): GameState {
 
 export function attemptJailRoll(state: GameState): GameState {
   if (state.status !== "ACTIVE") {
+    return state;
+  }
+
+  if (state.pendingRoll) {
     return state;
   }
 

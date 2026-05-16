@@ -52,7 +52,11 @@ export function GameDebugPanel() {
 
         <button
           className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
-          disabled={state.status !== "ACTIVE" || state.hasRolledThisTurn}
+          disabled={
+            state.status !== "ACTIVE" ||
+            state.hasRolledThisTurn ||
+            Boolean(state.pendingRoll)
+          }
           onClick={() => {
             dispatch({ type: "ROLL_DICE" });
           }}
@@ -63,7 +67,9 @@ export function GameDebugPanel() {
         <button
           className="rounded bg-black px-3 py-2 text-white disabled:opacity-50"
           disabled={
-            state.hasRolledThisTurn !== true || state.status !== "ACTIVE"
+            state.hasRolledThisTurn !== true ||
+            state.status !== "ACTIVE" ||
+            Boolean(state.pendingRoll)
           }
           onClick={() => {
             dispatch({ type: "END_TURN" });

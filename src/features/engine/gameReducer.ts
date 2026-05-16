@@ -3,7 +3,7 @@ import { GameAction } from "../types/actions";
 import { createInitialGame } from "./createInitialGame";
 import { buyPropertyAction } from "./actions/buyPropertyAction";
 import { endTurnAction } from "./actions/endTurnAction";
-import { rollDiceAction } from "./actions/rollDiceAction";
+import { resolveRollAction, rollDiceAction } from "./actions/rollDiceAction";
 import { startGameAction } from "./actions/startGameAction";
 import {
   payToLeaveJail,
@@ -18,6 +18,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "ROLL_DICE":
       return rollDiceAction(state);
+
+    case "RESOLVE_ROLL":
+      return resolveRollAction(state);
 
     case "BUY_PROPERTY":
       return buyPropertyAction(state, action.propertyId);
