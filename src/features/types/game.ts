@@ -1,4 +1,5 @@
 import { BoardSquare } from "./board";
+import { Card } from "./cards";
 import { Player } from "./player";
 
 export type GameStatus = "NOT_STARTED" | "ACTIVE" | "FINISHED";
@@ -42,6 +43,8 @@ export interface GameState {
   turnPhase: TurnPhase;
   board: BoardSquare[];
   ownedProperties: OwnedProperty[];
+  chanceDeck: Card[];
+  communityChestDeck: Card[];
   lastDiceRoll: DiceRoll | null;
   pendingRoll: PendingRoll | null;
   rolledDoublesCount: number;

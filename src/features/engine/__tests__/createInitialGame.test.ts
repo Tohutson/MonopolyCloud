@@ -11,9 +11,13 @@ describe("createInitialGame", () => {
     expect(state.players[1].position).toBe(0);
     expect(state.players[0].cash).toBe(1500);
     expect(state.players[1].cash).toBe(1500);
+    expect(state.players[0].getOutOfJailCards).toBe(0);
+    expect(state.players[1].getOutOfJailCards).toBe(0);
     expect(state.currentPlayerIndex).toBe(0);
     expect(state.board).toHaveLength(40);
     expect(state.ownedProperties).toEqual([]);
+    expect(state.chanceDeck).toHaveLength(16);
+    expect(state.communityChestDeck).toHaveLength(16);
     expect(state.lastDiceRoll).toBeNull();
     expect(state.pendingRoll).toBeNull();
     expect(state.turnPhase).toBe("INACTIVE");

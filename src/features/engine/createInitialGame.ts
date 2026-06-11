@@ -1,5 +1,9 @@
 import { board } from "../data/board";
 import { GameState } from "../types/game";
+import {
+  createChanceDeck,
+  createCommunityChestDeck,
+} from "./cards/createDecks";
 
 export function createInitialGame(): GameState {
   return {
@@ -14,10 +18,10 @@ export function createInitialGame(): GameState {
         cash: 1500,
         position: 0,
         status: "ACTIVE",
+        getOutOfJailCards: 0,
         jailState: {
           isInJail: false,
           turnsAttempted: 0,
-          getOutOfJailFreeCards: 0,
         },
       },
       {
@@ -26,10 +30,10 @@ export function createInitialGame(): GameState {
         cash: 1500,
         position: 0,
         status: "ACTIVE",
+        getOutOfJailCards: 0,
         jailState: {
           isInJail: false,
           turnsAttempted: 0,
-          getOutOfJailFreeCards: 0,
         },
       },
     ],
@@ -41,6 +45,9 @@ export function createInitialGame(): GameState {
     board,
 
     ownedProperties: [],
+
+    chanceDeck: createChanceDeck(),
+    communityChestDeck: createCommunityChestDeck(),
 
     lastDiceRoll: null,
 

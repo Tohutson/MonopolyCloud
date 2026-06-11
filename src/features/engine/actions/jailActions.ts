@@ -64,6 +64,14 @@ export function payToLeaveJail(state: GameState): GameState {
 }
 
 export function playGetOutOfJailCard(state: GameState): GameState {
+  return spendGetOutOfJailCard(state);
+}
+
+export function useGetOutOfJailCard(state: GameState): GameState {
+  return spendGetOutOfJailCard(state);
+}
+
+function spendGetOutOfJailCard(state: GameState): GameState {
   if (state.status !== "ACTIVE") {
     return state;
   }
@@ -82,7 +90,7 @@ export function playGetOutOfJailCard(state: GameState): GameState {
     return state;
   }
 
-  if (currentPlayer.jailState.getOutOfJailFreeCards <= 0) {
+  if (currentPlayer.getOutOfJailCards <= 0) {
     return state;
   }
 
@@ -93,11 +101,11 @@ export function playGetOutOfJailCard(state: GameState): GameState {
 
     return {
       ...player,
+      getOutOfJailCards: player.getOutOfJailCards - 1,
       jailState: {
         ...player.jailState,
         isInJail: false,
         turnsAttempted: 0,
-        getOutOfJailFreeCards: player.jailState.getOutOfJailFreeCards - 1,
       },
     };
   });

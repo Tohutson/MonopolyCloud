@@ -8,7 +8,7 @@ import { addLog } from "./logging";
 import { chargeCurrentPlayer, payRent } from "./payments";
 import { getPropertyOwnerId } from "./ownership";
 import { calculateRentForProperty } from "./rent";
-import { applyChanceCard, applyCommunityChestCard } from "./cards";
+import { drawAndExecuteCard } from "../cards/drawAndExecuteCard";
 import { sendCurrentPlayerToJail } from "./jail";
 
 export function resolveLandedSquare(state: GameState): GameState {
@@ -69,10 +69,10 @@ export function resolveLandedSquare(state: GameState): GameState {
     }
 
     case "CHANCE":
-      return applyChanceCard(state);
+      return drawAndExecuteCard(state, "chance");
 
     case "COMMUNITY_CHEST":
-      return applyCommunityChestCard(state);
+      return drawAndExecuteCard(state, "community");
 
     case "FREE_PARKING":
       return {

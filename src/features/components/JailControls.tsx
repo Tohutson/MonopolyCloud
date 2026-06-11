@@ -37,7 +37,7 @@ export function JailControls({
   const canPayFine = canAct && currentPlayer.cash >= JAIL_FINE;
 
   const canUseCard =
-    canAct && currentPlayer.jailState.getOutOfJailFreeCards > 0;
+    canAct && currentPlayer.getOutOfJailCards > 0;
 
   const canRollForRelease = canAct;
   const canEndTurn =

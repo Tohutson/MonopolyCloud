@@ -24,6 +24,11 @@ describe("payment rules", () => {
           cash: 1500,
           position: 0,
           status: "ACTIVE" as const,
+          getOutOfJailCards: 0,
+          jailState: {
+            isInJail: false,
+            turnsAttempted: 0,
+          },
         },
       ],
     };

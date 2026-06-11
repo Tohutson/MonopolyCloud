@@ -3,6 +3,7 @@ import {
   attemptJailRoll,
   payToLeaveJail,
   playGetOutOfJailCard,
+  useGetOutOfJailCard,
 } from "../actions/jailActions";
 import { rollTwoDice } from "../rules/dice";
 import { JAIL_POSITION } from "../rules/constants";
@@ -38,7 +39,7 @@ function putCurrentPlayerInJail(state: GameState): GameState {
 
 function setCurrentPlayerJailCards(
   state: GameState,
-  getOutOfJailFreeCards: number,
+  getOutOfJailCards: number,
 ): GameState {
   return {
     ...state,
@@ -46,10 +47,7 @@ function setCurrentPlayerJailCards(
       index === state.currentPlayerIndex
         ? {
             ...player,
-            jailState: {
-              ...player.jailState,
-              getOutOfJailFreeCards,
-            },
+            getOutOfJailCards,
           }
         : player,
     ),
@@ -76,13 +74,13 @@ describe("jail actions", () => {
   it("uses a Get Out of Jail Free card without going negative", () => {
     const state = setCurrentPlayerJailCards(
       putCurrentPlayerInJail(createActiveGameForTest()),
-      1,
+      2,
     );
 
     const nextState = playGetOutOfJailCard(state);
 
     expect(nextState.players[0].jailState.isInJail).toBe(false);
-    expect(nextState.players[0].jailState.getOutOfJailFreeCards).toBe(0);
+    expect(nextState.players[0].getOutOfJailCards).toBe(1);
     expect(nextState.players[0].jailState.turnsAttempted).toBe(0);
     expect(nextState.log[0].message).toBe(
       "Player 1 used a Get Out of Jail Free card.",
@@ -95,7 +93,16 @@ describe("jail actions", () => {
     const nextState = playGetOutOfJailCard(state);
 
     expect(nextState).toBe(state);
-    expect(nextState.players[0].jailState.getOutOfJailFreeCards).toBe(0);
+    expect(nextState.players[0].getOutOfJailCards).toBe(0);
+  });
+
+  it("does not use a Get Out of Jail Free card when the player is not in jail", () => {
+    const state = setCurrentPlayerJailCards(createActiveGameForTest(), 1);
+
+    const nextState = useGetOutOfJailCard(state);
+
+    expect(nextState).toBe(state);
+    expect(nextState.players[0].getOutOfJailCards).toBe(1);
   });
 
   it("increments attempts and ends the roll when doubles are not rolled", () => {
