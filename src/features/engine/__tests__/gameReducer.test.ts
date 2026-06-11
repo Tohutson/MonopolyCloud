@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createInitialGame } from "../createInitialGame";
 import { rollTwoDice } from "@/features/engine/rules/dice";
 import { gameReducer } from "../gameReducer";
+import { JAIL_POSITION } from "../rules/constants";
 import { getPropertyOwnerId } from "../rules/ownership";
 import { checkWinCondition } from "../rules/winConditions";
 import {
@@ -113,6 +114,12 @@ describe("gameReducer", () => {
     });
 
     it("rolls dice, stores a pending movement path, and marks the turn rolled", () => {
+      mockedRollTwoDice.mockReturnValue({
+        die1: 1,
+        die2: 2,
+        total: 3,
+      });
+
       const state = setCurrentPlayerPosition(createActiveGameForTest(), 1);
 
       const nextState = gameReducer(state, {
@@ -123,18 +130,51 @@ describe("gameReducer", () => {
       expect(nextState.players[1].position).toBe(0);
       expect(nextState.lastDiceRoll).toEqual({
         die1: 1,
-        die2: 1,
-        total: 2,
+        die2: 2,
+        total: 3,
       });
       expect(nextState.pendingRoll).toEqual({
         playerId: "player-1",
         startPosition: 1,
-        movementPath: [2, 3],
-        finalPosition: 3,
+        movementPath: [2, 3, 4],
+        finalPosition: 4,
         passedStart: false,
       });
       expect(nextState.hasRolledThisTurn).toBe(true);
-      expect(nextState.log[0].message).toBe("Player 1 rolled 1 + 1 = 2.");
+      expect(nextState.rolledDoublesCount).toBe(0);
+      expect(nextState.diceRollSequence).toBe(1);
+      expect(nextState.log[0].message).toBe("Player 1 rolled 1 + 2 = 3.");
+    });
+
+    it("keeps the turn open after rolling doubles", () => {
+      mockedRollTwoDice.mockReturnValue({
+        die1: 4,
+        die2: 4,
+        total: 8,
+      });
+
+      const state = setCurrentPlayerPosition(createActiveGameForTest(), 5);
+
+      const nextState = gameReducer(state, {
+        type: "ROLL_DICE",
+      });
+
+      expect(nextState.lastDiceRoll).toEqual({
+        die1: 4,
+        die2: 4,
+        total: 8,
+      });
+      expect(nextState.pendingRoll).toEqual({
+        playerId: "player-1",
+        startPosition: 5,
+        movementPath: [6, 7, 8, 9, 10, 11, 12, 13],
+        finalPosition: 13,
+        passedStart: false,
+      });
+      expect(nextState.hasRolledThisTurn).toBe(false);
+      expect(nextState.rolledDoublesCount).toBe(1);
+      expect(nextState.diceRollSequence).toBe(1);
+      expect(nextState.log[0].message).toBe("Player 1 rolled 4 + 4 = 8.");
     });
 
     it("resolves a pending roll after movement is ready to commit", () => {
@@ -157,6 +197,12 @@ describe("gameReducer", () => {
     });
 
     it("does not move a second time in the same turn", () => {
+      mockedRollTwoDice.mockReturnValue({
+        die1: 1,
+        die2: 2,
+        total: 3,
+      });
+
       const state = gameReducer(
         setCurrentPlayerPosition(createActiveGameForTest(), 1),
         {
@@ -177,6 +223,38 @@ describe("gameReducer", () => {
       expect(nextState).toBe(state);
       expect(nextState.players[0].position).toBe(1);
       expect(mockedRollTwoDice).toHaveBeenCalledTimes(1);
+    });
+
+    it("sends the player to jail after the third consecutive doubles roll", () => {
+      mockedRollTwoDice.mockReturnValue({
+        die1: 6,
+        die2: 6,
+        total: 12,
+      });
+
+      const state = {
+        ...setCurrentPlayerPosition(createActiveGameForTest(), 7),
+        rolledDoublesCount: 2,
+      };
+
+      const nextState = gameReducer(state, {
+        type: "ROLL_DICE",
+      });
+
+      expect(nextState.players[0].position).toBe(JAIL_POSITION);
+      expect(nextState.players[0].jailState.isInJail).toBe(true);
+      expect(nextState.pendingRoll).toBeNull();
+      expect(nextState.hasRolledThisTurn).toBe(true);
+      expect(nextState.rolledDoublesCount).toBe(0);
+      expect(nextState.diceRollSequence).toBe(1);
+      expect(nextState.lastDiceRoll).toEqual({
+        die1: 6,
+        die2: 6,
+        total: 12,
+      });
+      expect(nextState.log[0].message).toBe(
+        "Player 1 rolled doubles for the third time and is sent to Jail!",
+      );
     });
 
     it("adds the pass-Go reward when a pending roll wraps around the board", () => {

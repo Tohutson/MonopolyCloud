@@ -178,6 +178,7 @@ export function attemptJailRoll(state: GameState): GameState {
       players: updatedPlayers,
       lastDiceRoll: diceRoll,
       hasRolledThisTurn: true,
+      diceRollSequence: state.diceRollSequence + 1,
       log: addLog(state, message),
     };
 
@@ -206,6 +207,7 @@ export function attemptJailRoll(state: GameState): GameState {
     players: updatedPlayers,
     lastDiceRoll: diceRoll,
     hasRolledThisTurn: true,
+    diceRollSequence: state.diceRollSequence + 1,
     log: addLog(
       state,
       `${currentPlayer.name} rolled ${diceRoll.die1} and ${diceRoll.die2} but did not get out of jail.`,

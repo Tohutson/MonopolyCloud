@@ -80,6 +80,8 @@ export function markTurnRolled(state: GameState): GameState {
   return {
     ...state,
     hasRolledThisTurn: true,
+    rolledDoublesCount: 0,
+    diceRollSequence: state.diceRollSequence,
     lastDiceRoll: {
       die1: 1,
       die2: 2,

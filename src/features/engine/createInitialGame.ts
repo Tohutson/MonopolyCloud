@@ -45,6 +45,8 @@ export function createInitialGame(): GameState {
     pendingRoll: null,
 
     hasRolledThisTurn: false,
+    rolledDoublesCount: 0,
+    diceRollSequence: 0,
 
     winnerId: null,
 

@@ -8,6 +8,7 @@ import { PASS_GO_REWARD } from "../rules/constants";
 import { addLog } from "../rules/logging";
 import { resolveLandedSquare } from "../rules/squareResolution";
 import { checkWinCondition } from "../rules/winConditions";
+import { sendCurrentPlayerToJail } from "../rules/jail";
 
 export function rollDiceAction(state: GameState): GameState {
   if (state.status !== "ACTIVE") {
@@ -40,6 +41,22 @@ export function rollDiceAction(state: GameState): GameState {
     state.board.length,
   );
 
+  const rolledDoubles = diceRoll.die1 === diceRoll.die2;
+
+  if (rolledDoubles && state.rolledDoublesCount === 2) {
+    return sendCurrentPlayerToJail(
+      {
+        ...state,
+        lastDiceRoll: diceRoll,
+        pendingRoll: null,
+        hasRolledThisTurn: true,
+        rolledDoublesCount: 0,
+        diceRollSequence: state.diceRollSequence + 1,
+      },
+      `${currentPlayer.name} rolled doubles for the third time and is sent to Jail!`,
+    );
+  }
+
   return {
     ...state,
     lastDiceRoll: diceRoll,
@@ -54,7 +71,9 @@ export function rollDiceAction(state: GameState): GameState {
       finalPosition: movementResult.newPosition,
       passedStart: movementResult.passedStart,
     },
-    hasRolledThisTurn: true,
+    hasRolledThisTurn: rolledDoubles ? false : true,
+    rolledDoublesCount: rolledDoubles ? state.rolledDoublesCount + 1 : 0,
+    diceRollSequence: state.diceRollSequence + 1,
     log: addLog(
       state,
       `${currentPlayer.name} rolled ${diceRoll.die1} + ${diceRoll.die2} = ${diceRoll.total}.`,

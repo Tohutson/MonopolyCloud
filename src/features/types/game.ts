@@ -37,6 +37,8 @@ export interface GameState {
   lastDiceRoll: DiceRoll | null;
   pendingRoll: PendingRoll | null;
   hasRolledThisTurn: boolean;
+  rolledDoublesCount: number;
+  diceRollSequence: number;
   winnerId: string | null;
   log: GameLogEntry[];
 }
