@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "motion/react";
 import { GameAction } from "../types/actions";
 import { DiceRoll, GameState } from "../types/game";
@@ -50,23 +50,32 @@ export function useTurnAnimationController(
   const [visualPlayerPositions, setVisualPlayerPositions] = useState<
     Record<string, number>
   >({});
+  const lastHandledDiceRollSequence = useRef(state.diceRollSequence);
 
   useEffect(() => {
-    const pendingRoll = state.pendingRoll;
-
-    if (!pendingRoll || !state.lastDiceRoll) {
+    if (!state.lastDiceRoll) {
+      lastHandledDiceRollSequence.current = state.diceRollSequence;
       return;
     }
 
+    if (state.diceRollSequence === lastHandledDiceRollSequence.current) {
+      return;
+    }
+
+    lastHandledDiceRollSequence.current = state.diceRollSequence;
+
+    const pendingRoll = state.pendingRoll;
     const activePendingRoll = pendingRoll;
     const finalDiceRoll = state.lastDiceRoll;
     let isCancelled = false;
     let diceShuffleTimer: number | undefined;
 
     async function animatePendingRoll() {
-      setVisualPlayerPositions({
-        [activePendingRoll.playerId]: activePendingRoll.startPosition,
-      });
+      if (activePendingRoll) {
+        setVisualPlayerPositions({
+          [activePendingRoll.playerId]: activePendingRoll.startPosition,
+        });
+      }
 
       if (shouldReduceMotion) {
         setDisplayedDiceRoll(finalDiceRoll);
@@ -86,6 +95,13 @@ export function useTurnAnimationController(
       }
 
       setDisplayedDiceRoll(finalDiceRoll);
+
+      if (!activePendingRoll) {
+        setVisualPlayerPositions({});
+        setPhase("idle");
+        return;
+      }
+
       setPhase("moving-token");
 
       const stepDuration = shouldReduceMotion
@@ -125,14 +141,13 @@ export function useTurnAnimationController(
         window.clearInterval(diceShuffleTimer);
       }
     };
-  }, [dispatch, shouldReduceMotion, state.lastDiceRoll, state.pendingRoll]);
-
-  const effectivePhase = state.pendingRoll ? phase : "idle";
+  }, [dispatch, shouldReduceMotion, state.diceRollSequence, state.lastDiceRoll, state.pendingRoll]);
 
   return {
-    displayedDiceRoll: state.pendingRoll ? displayedDiceRoll : state.lastDiceRoll,
-    isAnimatingTurn: effectivePhase !== "idle",
-    phase: effectivePhase,
+    displayedDiceRoll:
+      phase !== "idle" || state.pendingRoll ? displayedDiceRoll : state.lastDiceRoll,
+    isAnimatingTurn: phase !== "idle",
+    phase,
     visualPlayerPositions: state.pendingRoll ? visualPlayerPositions : {},
   };
 }

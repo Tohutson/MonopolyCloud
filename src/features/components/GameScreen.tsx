@@ -77,7 +77,12 @@ export function GameScreen() {
 
           <aside className="space-y-4 xl:max-h-[calc(100vh-150px)] xl:overflow-y-auto xl:pr-1">
             {isInJail ? (
-              <JailControls state={state} dispatch={dispatch} />
+              <JailControls
+                state={state}
+                dispatch={dispatch}
+                displayedDiceRoll={turnAnimation.displayedDiceRoll}
+                isDiceRolling={turnAnimation.phase === "rolling-dice"}
+              />
             ) : (
               <TurnControls
                 state={state}

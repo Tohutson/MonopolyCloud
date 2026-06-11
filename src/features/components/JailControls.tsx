@@ -1,19 +1,38 @@
 import { GameAction } from "../types/actions";
 import { GameState } from "../types/game";
 import { JAIL_FINE, MAX_JAIL_ATTEMPTS } from "../engine/rules/constants";
+import {
+  controlBodyTextClass,
+  controlHeaderKickerClass,
+  controlHeaderTitleClass,
+  controlMutedTextClass,
+  controlPanelClass,
+  controlPrimaryButtonClass,
+  controlSecondaryButtonClass,
+  controlDangerButtonClass,
+} from "./controlStyles";
+import { DiceRollDisplay } from "./DiceRollDisplay";
 
 interface JailControlsProps {
   state: GameState;
   dispatch: (action: GameAction) => void;
+  displayedDiceRoll?: GameState["lastDiceRoll"];
+  isDiceRolling?: boolean;
 }
 
-export function JailControls({ state, dispatch }: JailControlsProps) {
+export function JailControls({
+  state,
+  dispatch,
+  displayedDiceRoll,
+  isDiceRolling = false,
+}: JailControlsProps) {
   const currentPlayer = state.players[state.currentPlayerIndex];
 
   const canAct =
     state.status === "ACTIVE" &&
     currentPlayer.jailState.isInJail &&
-    !state.hasRolledThisTurn;
+    !state.hasRolledThisTurn &&
+    !isDiceRolling;
 
   const canPayFine = canAct && currentPlayer.cash >= JAIL_FINE;
 
@@ -21,59 +40,67 @@ export function JailControls({ state, dispatch }: JailControlsProps) {
     canAct && currentPlayer.jailState.getOutOfJailFreeCards > 0;
 
   const canRollForRelease = canAct;
-  const canEndTurn = state.status === "ACTIVE" && state.hasRolledThisTurn;
+  const canEndTurn =
+    state.status === "ACTIVE" &&
+    state.hasRolledThisTurn &&
+    !state.pendingRoll &&
+    !isDiceRolling;
 
   return (
-    <section className="border border-slate-950 bg-white p-4 shadow-[4px_4px_0_#d6a531]">
+    <section className={controlPanelClass}>
       <div className="border-b border-slate-950 pb-3">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-700">
-          Jail Turn
-        </p>
-        <h2 className="text-xl font-black uppercase tracking-wide">
-          Jail Controls
-        </h2>
+        <p className={controlHeaderKickerClass}>Jail Turn</p>
+        <h2 className={controlHeaderTitleClass}>Jail Controls</h2>
       </div>
 
-      <div className="mt-4 space-y-2 text-sm">
+      <DiceRollDisplay
+        roll={displayedDiceRoll ?? state.lastDiceRoll}
+        isRolling={isDiceRolling}
+        emptyMessage="No jail roll yet."
+        title={isDiceRolling ? "Rolling" : "Last Jail Roll"}
+      />
+
+      <div className={controlBodyTextClass}>
         <p>
           <strong>{currentPlayer.name}</strong> is in Jail.
         </p>
-        <p className="text-slate-600">
+        <p className={controlMutedTextClass}>
           Attempts: {currentPlayer.jailState.turnsAttempted} /{" "}
           {MAX_JAIL_ATTEMPTS}
         </p>
       </div>
+
       <div className="mt-4 grid gap-2">
         <button
-          className="w-full rounded border border-slate-950 bg-amber-500 px-3 py-2 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
+          className={controlPrimaryButtonClass}
           disabled={!canPayFine}
           onClick={() => dispatch({ type: "PAY_TO_LEAVE_JAIL" })}
         >
           Pay ${JAIL_FINE} to Leave Jail
         </button>
         <button
-          className="w-full rounded border border-slate-950 bg-amber-500 px-3 py-2 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
+          className={controlSecondaryButtonClass}
           disabled={!canUseCard}
           onClick={() => dispatch({ type: "USE_JAIL_CARD" })}
         >
           Use Get Out of Jail Free Card
         </button>
         <button
-          className="w-full rounded border border-slate-950 bg-amber-500 px-3 py-2 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
+          className={controlPrimaryButtonClass}
           disabled={!canRollForRelease}
           onClick={() => dispatch({ type: "ROLL_FOR_JAIL_RELEASE" })}
         >
           Roll for Doubles to Try to Leave Jail
         </button>
         <button
-          className="w-full rounded border border-slate-950 bg-amber-500 px-3 py-2 text-sm font-semibold text-slate-950 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
+          className={controlSecondaryButtonClass}
           disabled={!canEndTurn}
           onClick={() => dispatch({ type: "END_TURN" })}
         >
           End Turn (Stay in Jail)
         </button>
         <button
-          className="w-full rounded border border-slate-950 bg-red-500 px-3 py-2 text-sm font-semibold text-white"
+          className={controlDangerButtonClass}
           onClick={() => dispatch({ type: "RESET_GAME" })}
         >
           Reset Game
