@@ -16,7 +16,7 @@ describe("createInitialGame", () => {
     expect(state.ownedProperties).toEqual([]);
     expect(state.lastDiceRoll).toBeNull();
     expect(state.pendingRoll).toBeNull();
-    expect(state.hasRolledThisTurn).toBe(false);
+    expect(state.turnPhase).toBe("INACTIVE");
     expect(state.rolledDoublesCount).toBe(0);
     expect(state.diceRollSequence).toBe(0);
     expect(state.winnerId).toBeNull();

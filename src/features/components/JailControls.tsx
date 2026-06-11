@@ -31,7 +31,7 @@ export function JailControls({
   const canAct =
     state.status === "ACTIVE" &&
     currentPlayer.jailState.isInJail &&
-    !state.hasRolledThisTurn &&
+    state.turnPhase === "ROLL_READY" &&
     !isDiceRolling;
 
   const canPayFine = canAct && currentPlayer.cash >= JAIL_FINE;
@@ -42,8 +42,7 @@ export function JailControls({
   const canRollForRelease = canAct;
   const canEndTurn =
     state.status === "ACTIVE" &&
-    state.hasRolledThisTurn &&
-    !state.pendingRoll &&
+    state.turnPhase === "OPTIONAL_ACTIONS" &&
     !isDiceRolling;
 
   return (

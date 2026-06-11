@@ -31,8 +31,7 @@ export function GameScreen() {
 
   const canBuy =
     state.status === "ACTIVE" &&
-    state.hasRolledThisTurn &&
-    !state.pendingRoll &&
+    state.turnPhase === "OPTIONAL_ACTIONS" &&
     !turnAnimation.isAnimatingTurn &&
     currentSquare.type === "PROPERTY" &&
     !ownedProperty &&

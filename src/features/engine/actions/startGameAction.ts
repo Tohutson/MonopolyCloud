@@ -8,7 +8,9 @@ export function startGameAction(state: GameState): GameState {
 
   return {
     ...state,
+    turnPhase: "ROLL_READY",
     status: "ACTIVE",
+    rolledDoublesCount: 0,
     log: addLog(state, "Game started."),
   };
 }

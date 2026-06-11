@@ -4,10 +4,7 @@ import {
   calculateNewPosition,
   getMovementPath,
 } from "@/features/engine/rules/movement";
-import { PASS_GO_REWARD } from "../rules/constants";
 import { addLog } from "../rules/logging";
-import { resolveLandedSquare } from "../rules/squareResolution";
-import { checkWinCondition } from "../rules/winConditions";
 import { sendCurrentPlayerToJail } from "../rules/jail";
 
 export function rollDiceAction(state: GameState): GameState {
@@ -15,7 +12,7 @@ export function rollDiceAction(state: GameState): GameState {
     return state;
   }
 
-  if (state.hasRolledThisTurn) {
+  if (state.turnPhase !== "ROLL_READY") {
     return state;
   }
 
@@ -49,7 +46,7 @@ export function rollDiceAction(state: GameState): GameState {
         ...state,
         lastDiceRoll: diceRoll,
         pendingRoll: null,
-        hasRolledThisTurn: true,
+        turnPhase: "OPTIONAL_ACTIONS",
         rolledDoublesCount: 0,
         diceRollSequence: state.diceRollSequence + 1,
       },
@@ -71,7 +68,7 @@ export function rollDiceAction(state: GameState): GameState {
       finalPosition: movementResult.newPosition,
       passedStart: movementResult.passedStart,
     },
-    hasRolledThisTurn: rolledDoubles ? false : true,
+    turnPhase: "MOVING",
     rolledDoublesCount: rolledDoubles ? state.rolledDoublesCount + 1 : 0,
     diceRollSequence: state.diceRollSequence + 1,
     log: addLog(
@@ -79,46 +76,4 @@ export function rollDiceAction(state: GameState): GameState {
       `${currentPlayer.name} rolled ${diceRoll.die1} + ${diceRoll.die2} = ${diceRoll.total}.`,
     ),
   };
-}
-
-export function resolveRollAction(state: GameState): GameState {
-  if (state.status !== "ACTIVE") {
-    return state;
-  }
-
-  const pendingRoll = state.pendingRoll;
-
-  if (!pendingRoll) {
-    return state;
-  }
-
-  const currentPlayer = state.players[state.currentPlayerIndex];
-
-  if (currentPlayer.id !== pendingRoll.playerId) {
-    return state;
-  }
-
-  const updatedPlayers = state.players.map((player, index) => {
-    if (index !== state.currentPlayerIndex) {
-      return player;
-    }
-
-    return {
-      ...player,
-      position: pendingRoll.finalPosition,
-
-      cash: pendingRoll.passedStart
-        ? player.cash + PASS_GO_REWARD
-        : player.cash,
-    };
-  });
-
-  const nextState: GameState = {
-    ...state,
-    players: updatedPlayers,
-    pendingRoll: null,
-  };
-
-  const resolvedState = resolveLandedSquare(nextState);
-  return checkWinCondition(resolvedState);
 }

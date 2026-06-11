@@ -15,7 +15,7 @@ export function payToLeaveJail(state: GameState): GameState {
     return state;
   }
 
-  if (state.hasRolledThisTurn) {
+  if (state.turnPhase !== "ROLL_READY") {
     return state;
   }
 
@@ -72,7 +72,7 @@ export function playGetOutOfJailCard(state: GameState): GameState {
     return state;
   }
 
-  if (state.hasRolledThisTurn) {
+  if (state.turnPhase !== "ROLL_READY") {
     return state;
   }
 
@@ -123,7 +123,7 @@ export function attemptJailRoll(state: GameState): GameState {
     return state;
   }
 
-  if (state.hasRolledThisTurn) {
+  if (state.turnPhase !== "ROLL_READY") {
     return state;
   }
 
@@ -177,13 +177,18 @@ export function attemptJailRoll(state: GameState): GameState {
       ...state,
       players: updatedPlayers,
       lastDiceRoll: diceRoll,
-      hasRolledThisTurn: true,
+      pendingRoll: null,
+      turnPhase: "RESOLVE_SQUARE",
+      rolledDoublesCount: 0,
       diceRollSequence: state.diceRollSequence + 1,
       log: addLog(state, message),
     };
 
     nextState = resolveLandedSquare(nextState);
-    nextState = checkWinCondition(nextState);
+    nextState = checkWinCondition({
+      ...nextState,
+      turnPhase: "OPTIONAL_ACTIONS",
+    });
 
     return nextState;
   }
@@ -206,7 +211,8 @@ export function attemptJailRoll(state: GameState): GameState {
     ...state,
     players: updatedPlayers,
     lastDiceRoll: diceRoll,
-    hasRolledThisTurn: true,
+    turnPhase: "OPTIONAL_ACTIONS",
+    rolledDoublesCount: 0,
     diceRollSequence: state.diceRollSequence + 1,
     log: addLog(
       state,

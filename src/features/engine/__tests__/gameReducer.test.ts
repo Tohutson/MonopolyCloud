@@ -94,7 +94,7 @@ describe("gameReducer", () => {
       expect(resetState.currentPlayerIndex).toBe(0);
       expect(resetState.ownedProperties).toEqual([]);
       expect(resetState.log).toEqual([]);
-      expect(resetState.hasRolledThisTurn).toBe(false);
+      expect(resetState.turnPhase).toBe("INACTIVE");
       expect(resetState.lastDiceRoll).toBeNull();
       expect(resetState.players[0].cash).toBe(1500);
       expect(resetState.players[0].position).toBe(0);
@@ -113,7 +113,7 @@ describe("gameReducer", () => {
       expect(mockedRollTwoDice).not.toHaveBeenCalled();
     });
 
-    it("rolls dice, stores a pending movement path, and marks the turn rolled", () => {
+    it("rolls dice, stores a pending movement path, and enters moving", () => {
       mockedRollTwoDice.mockReturnValue({
         die1: 1,
         die2: 2,
@@ -140,7 +140,7 @@ describe("gameReducer", () => {
         finalPosition: 4,
         passedStart: false,
       });
-      expect(nextState.hasRolledThisTurn).toBe(true);
+      expect(nextState.turnPhase).toBe("MOVING");
       expect(nextState.rolledDoublesCount).toBe(0);
       expect(nextState.diceRollSequence).toBe(1);
       expect(nextState.log[0].message).toBe("Player 1 rolled 1 + 2 = 3.");
@@ -171,13 +171,13 @@ describe("gameReducer", () => {
         finalPosition: 13,
         passedStart: false,
       });
-      expect(nextState.hasRolledThisTurn).toBe(false);
+      expect(nextState.turnPhase).toBe("MOVING");
       expect(nextState.rolledDoublesCount).toBe(1);
       expect(nextState.diceRollSequence).toBe(1);
       expect(nextState.log[0].message).toBe("Player 1 rolled 4 + 4 = 8.");
     });
 
-    it("resolves a pending roll after movement is ready to commit", () => {
+    it("completes movement and enters square resolution", () => {
       const rolledState = gameReducer(
         setCurrentPlayerPosition(createActiveGameForTest(), 1),
         {
@@ -186,11 +186,33 @@ describe("gameReducer", () => {
       );
 
       const nextState = gameReducer(rolledState, {
-        type: "RESOLVE_ROLL",
+        type: "COMPLETE_MOVE",
       });
 
       expect(nextState.players[0].position).toBe(3);
       expect(nextState.pendingRoll).toBeNull();
+      expect(nextState.turnPhase).toBe("RESOLVE_SQUARE");
+    });
+
+    it("resolves the landed square after movement is complete", () => {
+      const rolledState = gameReducer(
+        setCurrentPlayerPosition(createActiveGameForTest(), 1),
+        {
+          type: "ROLL_DICE",
+        },
+      );
+
+      const movedState = gameReducer(rolledState, {
+        type: "COMPLETE_MOVE",
+      });
+
+      const nextState = gameReducer(movedState, {
+        type: "RESOLVE_SQUARE",
+      });
+
+      expect(nextState.players[0].position).toBe(3);
+      expect(nextState.pendingRoll).toBeNull();
+      expect(nextState.turnPhase).toBe("OPTIONAL_ACTIONS");
       expect(nextState.log[0].message).toBe(
         "Player 1 landed on Baltic Avenue. It is available for $60.",
       );
@@ -244,7 +266,7 @@ describe("gameReducer", () => {
       expect(nextState.players[0].position).toBe(JAIL_POSITION);
       expect(nextState.players[0].jailState.isInJail).toBe(true);
       expect(nextState.pendingRoll).toBeNull();
-      expect(nextState.hasRolledThisTurn).toBe(true);
+      expect(nextState.turnPhase).toBe("OPTIONAL_ACTIONS");
       expect(nextState.rolledDoublesCount).toBe(0);
       expect(nextState.diceRollSequence).toBe(1);
       expect(nextState.lastDiceRoll).toEqual({
@@ -265,8 +287,12 @@ describe("gameReducer", () => {
         },
       );
 
-      const nextState = gameReducer(state, {
-        type: "RESOLVE_ROLL",
+      const movedState = gameReducer(state, {
+        type: "COMPLETE_MOVE",
+      });
+
+      const nextState = gameReducer(movedState, {
+        type: "RESOLVE_SQUARE",
       });
 
       expect(nextState.players[0].position).toBe(0);
@@ -300,8 +326,12 @@ describe("gameReducer", () => {
         type: "ROLL_DICE",
       });
 
-      const nextState = gameReducer(rolledState, {
-        type: "RESOLVE_ROLL",
+      const movedState = gameReducer(rolledState, {
+        type: "COMPLETE_MOVE",
+      });
+
+      const nextState = gameReducer(movedState, {
+        type: "RESOLVE_SQUARE",
       });
 
       expect(nextState.players[0].cash).toBe(-1);
@@ -345,8 +375,12 @@ describe("gameReducer", () => {
     it("does nothing when there is no pending roll to resolve", () => {
       const state = createActiveGameForTest();
 
-      const nextState = gameReducer(state, {
-        type: "RESOLVE_ROLL",
+      const movedState = gameReducer(state, {
+        type: "COMPLETE_MOVE",
+      });
+
+      const nextState = gameReducer(movedState, {
+        type: "RESOLVE_SQUARE",
       });
 
       expect(nextState).toBe(state);
@@ -385,7 +419,7 @@ describe("gameReducer", () => {
       });
 
       expect(nextState.currentPlayerIndex).toBe(1);
-      expect(nextState.hasRolledThisTurn).toBe(false);
+      expect(nextState.turnPhase).toBe("ROLL_READY");
       expect(nextState.lastDiceRoll).toBeNull();
       expect(nextState.log[0].message).toBe("Player 2's turn started.");
     });
@@ -457,7 +491,9 @@ describe("gameReducer", () => {
     });
 
     it("buys an unowned property and records the owner", () => {
-      const state = setCurrentPlayerPosition(createActiveGameForTest(), 1);
+      const state = markTurnRolled(
+        setCurrentPlayerPosition(createActiveGameForTest(), 1),
+      );
 
       const nextState = gameReducer(state, {
         type: "BUY_PROPERTY",
@@ -481,7 +517,7 @@ describe("gameReducer", () => {
 
     it("does not duplicate an already owned property", () => {
       const state = markPropertyOwned(
-        setCurrentPlayerPosition(createActiveGameForTest(), 1),
+        markTurnRolled(setCurrentPlayerPosition(createActiveGameForTest(), 1)),
         "mediterranean-avenue",
         "player-2",
       );
@@ -501,7 +537,7 @@ describe("gameReducer", () => {
 
     it("does not buy a property the player cannot afford", () => {
       const state = setCurrentPlayerCash(
-        setCurrentPlayerPosition(createActiveGameForTest(), 1),
+        markTurnRolled(setCurrentPlayerPosition(createActiveGameForTest(), 1)),
         59,
       );
 

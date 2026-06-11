@@ -127,7 +127,7 @@ export function useTurnAnimationController(
       }
 
       setPhase("resolving");
-      dispatch({ type: "RESOLVE_ROLL" });
+      dispatch({ type: "COMPLETE_MOVE" });
       setVisualPlayerPositions({});
       setPhase("idle");
     }
@@ -142,6 +142,14 @@ export function useTurnAnimationController(
       }
     };
   }, [dispatch, shouldReduceMotion, state.diceRollSequence, state.lastDiceRoll, state.pendingRoll]);
+
+  useEffect(() => {
+    if (state.turnPhase !== "RESOLVE_SQUARE") {
+      return;
+    }
+
+    dispatch({ type: "RESOLVE_SQUARE" });
+  }, [dispatch, state.turnPhase]);
 
   return {
     displayedDiceRoll:

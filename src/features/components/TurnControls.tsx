@@ -27,13 +27,11 @@ export function TurnControls({
   const canStart = state.status === "NOT_STARTED";
   const canRoll =
     state.status === "ACTIVE" &&
-    !state.hasRolledThisTurn &&
-    !state.pendingRoll &&
+    state.turnPhase === "ROLL_READY" &&
     !isTurnAnimating;
   const canEndTurn =
     state.status === "ACTIVE" &&
-    state.hasRolledThisTurn &&
-    !state.pendingRoll &&
+    state.turnPhase === "OPTIONAL_ACTIONS" &&
     !isTurnAnimating;
   const diceRollToDisplay = displayedDiceRoll ?? state.lastDiceRoll;
 

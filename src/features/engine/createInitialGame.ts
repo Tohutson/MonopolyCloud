@@ -36,6 +36,8 @@ export function createInitialGame(): GameState {
 
     currentPlayerIndex: 0,
 
+    turnPhase: "INACTIVE",
+
     board,
 
     ownedProperties: [],
@@ -44,7 +46,6 @@ export function createInitialGame(): GameState {
 
     pendingRoll: null,
 
-    hasRolledThisTurn: false,
     rolledDoublesCount: 0,
     diceRollSequence: 0,
 

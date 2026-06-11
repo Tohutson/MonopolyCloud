@@ -27,16 +27,23 @@ export interface GameLogEntry {
   message: string;
 }
 
+export type TurnPhase =
+  | "INACTIVE"
+  | "ROLL_READY"
+  | "MOVING"
+  | "RESOLVE_SQUARE"
+  | "OPTIONAL_ACTIONS";
+
 export interface GameState {
   gameId: string;
   status: GameStatus;
   players: Player[];
   currentPlayerIndex: number;
+  turnPhase: TurnPhase;
   board: BoardSquare[];
   ownedProperties: OwnedProperty[];
   lastDiceRoll: DiceRoll | null;
   pendingRoll: PendingRoll | null;
-  hasRolledThisTurn: boolean;
   rolledDoublesCount: number;
   diceRollSequence: number;
   winnerId: string | null;

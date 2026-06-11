@@ -6,7 +6,7 @@ export function endTurnAction(state: GameState): GameState {
     return state;
   }
 
-  if (!state.hasRolledThisTurn) {
+  if (state.turnPhase !== "OPTIONAL_ACTIONS") {
     return state;
   }
 
@@ -19,8 +19,13 @@ export function endTurnAction(state: GameState): GameState {
   return {
     ...state,
     currentPlayerIndex: nextPlayerIndex,
-    hasRolledThisTurn: false,
+    turnPhase: "ROLL_READY",
     lastDiceRoll: null,
-    log: addLog(state, `${state.players[nextPlayerIndex].name}'s turn started.`),
+    pendingRoll: null,
+    rolledDoublesCount: 0,
+    log: addLog(
+      state,
+      `${state.players[nextPlayerIndex].name}'s turn started.`,
+    ),
   };
 }

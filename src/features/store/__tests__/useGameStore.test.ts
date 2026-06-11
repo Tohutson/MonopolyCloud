@@ -17,7 +17,7 @@ describe("useGameStore", () => {
     expect(useGameStore.getState().state.status).toBe("ACTIVE");
   });
 
-  it("keeps a roll pending until movement is resolved", () => {
+  it("keeps a roll pending until movement is completed and resolved", () => {
     useGameStore.getState().dispatch({
       type: "START_GAME",
     });
@@ -36,13 +36,24 @@ describe("useGameStore", () => {
     expect(rolledState.players[0].position).toBe(0);
 
     useGameStore.getState().dispatch({
-      type: "RESOLVE_ROLL",
+      type: "COMPLETE_MOVE",
+    });
+
+    const movedState = useGameStore.getState().state;
+
+    expect(movedState.pendingRoll).toBeNull();
+    expect(movedState.players[0].position).toBe(pendingRoll.finalPosition);
+    expect(movedState.turnPhase).toBe("RESOLVE_SQUARE");
+
+    useGameStore.getState().dispatch({
+      type: "RESOLVE_SQUARE",
     });
 
     const resolvedState = useGameStore.getState().state;
 
     expect(resolvedState.pendingRoll).toBeNull();
     expect(resolvedState.players[0].position).toBe(pendingRoll.finalPosition);
+    expect(resolvedState.turnPhase).toBe("OPTIONAL_ACTIONS");
   });
 
   it("dispatches RESET_GAME back to a fresh initial state", () => {

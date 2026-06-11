@@ -10,7 +10,7 @@ export function buyPropertyAction(
     return state;
   }
 
-  if (state.pendingRoll) {
+  if (state.turnPhase !== "OPTIONAL_ACTIONS") {
     return state;
   }
 

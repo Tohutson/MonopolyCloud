@@ -69,7 +69,7 @@ describe("jail actions", () => {
     expect(nextState.players[0].cash).toBe(1450);
     expect(nextState.players[0].jailState.isInJail).toBe(false);
     expect(nextState.players[0].jailState.turnsAttempted).toBe(0);
-    expect(nextState.hasRolledThisTurn).toBe(false);
+    expect(nextState.turnPhase).toBe("ROLL_READY");
     expect(nextState.log[0].message).toBe("Player 1 paid $50 to leave jail.");
   });
 
@@ -111,7 +111,7 @@ describe("jail actions", () => {
     expect(nextState.players[0].position).toBe(JAIL_POSITION);
     expect(nextState.players[0].jailState.isInJail).toBe(true);
     expect(nextState.players[0].jailState.turnsAttempted).toBe(1);
-    expect(nextState.hasRolledThisTurn).toBe(true);
+    expect(nextState.turnPhase).toBe("OPTIONAL_ACTIONS");
     expect(nextState.diceRollSequence).toBe(1);
     expect(nextState.lastDiceRoll).toEqual({ die1: 2, die2: 3, total: 5 });
   });
@@ -130,7 +130,7 @@ describe("jail actions", () => {
     expect(nextState.players[0].cash).toBe(1500);
     expect(nextState.players[0].jailState.isInJail).toBe(false);
     expect(nextState.players[0].jailState.turnsAttempted).toBe(0);
-    expect(nextState.hasRolledThisTurn).toBe(true);
+    expect(nextState.turnPhase).toBe("OPTIONAL_ACTIONS");
     expect(nextState.diceRollSequence).toBe(1);
     expect(nextState.log[1].message).toBe(
       "Player 1 rolled doubles and got out of jail!",
@@ -145,7 +145,7 @@ describe("jail actions", () => {
     });
     const state = {
       ...putCurrentPlayerInJail(createActiveGameForTest()),
-      hasRolledThisTurn: true,
+      turnPhase: "OPTIONAL_ACTIONS" as const,
     };
 
     const nextState = attemptJailRoll(state);

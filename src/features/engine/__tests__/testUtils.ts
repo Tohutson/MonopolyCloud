@@ -8,6 +8,7 @@ export function createActiveGameForTest(): GameState {
   return {
     ...createInitialGame(),
     status: "ACTIVE",
+    turnPhase: "ROLL_READY",
   };
 }
 
@@ -79,7 +80,7 @@ export function markPropertyOwned(
 export function markTurnRolled(state: GameState): GameState {
   return {
     ...state,
-    hasRolledThisTurn: true,
+    turnPhase: "OPTIONAL_ACTIONS",
     rolledDoublesCount: 0,
     diceRollSequence: state.diceRollSequence,
     lastDiceRoll: {
