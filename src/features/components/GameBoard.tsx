@@ -1,4 +1,5 @@
 import { LayoutGroup, motion, useReducedMotion } from "motion/react";
+import { ReactNode } from "react";
 import type { BoardSquare } from "../types/board";
 import { GameState } from "../types/game";
 import { Player } from "../types/player";
@@ -6,6 +7,7 @@ import { Player } from "../types/player";
 interface GameBoardProps {
   state: GameState;
   visualPlayerPositions?: Record<string, number>;
+  centerContent?: ReactNode;
 }
 
 interface PlayerToken {
@@ -116,6 +118,7 @@ function getTokenClass(playerNumber: number, isCurrentPlayer: boolean) {
 export function GameBoard({
   state,
   visualPlayerPositions = {},
+  centerContent,
 }: GameBoardProps) {
   const currentPlayer = state.players[state.currentPlayerIndex];
   const shouldReduceMotion = useReducedMotion();
@@ -154,16 +157,20 @@ export function GameBoard({
             <div
               className="col-start-2 col-span-9 row-start-2 row-span-9 m-px flex flex-col items-center justify-center border border-slate-950 bg-stone-50 p-8 text-center"
             >
-              <p className="text-xs font-semibold uppercase tracking-[0.34em] text-amber-700">
-                Serverless Property Trading
-              </p>
-              <h3 className="mt-3 text-6xl font-black uppercase tracking-wide text-slate-950">
-                Cloudopoly
-              </h3>
-              <div className="mt-5 h-1 w-40 bg-amber-500" />
-              <p className="mt-5 max-w-md text-sm font-medium uppercase tracking-[0.16em] text-slate-600">
-                Roll, collect, invest, and race around the cloud district.
-              </p>
+              {centerContent ?? (
+                <>
+                  <p className="text-xs font-semibold uppercase tracking-[0.34em] text-amber-700">
+                    Serverless Property Trading
+                  </p>
+                  <h3 className="mt-3 text-6xl font-black uppercase tracking-wide text-slate-950">
+                    Cloudopoly
+                  </h3>
+                  <div className="mt-5 h-1 w-40 bg-amber-500" />
+                  <p className="mt-5 max-w-md text-sm font-medium uppercase tracking-[0.16em] text-slate-600">
+                    Roll, collect, invest, and race around the cloud district.
+                  </p>
+                </>
+              )}
             </div>
 
             {state.board.map((square) => {

@@ -1,25 +1,14 @@
+import { JAIL_FINE, MAX_JAIL_ATTEMPTS } from "../engine/rules/constants";
 import { GameAction } from "../types/actions";
 import { DiceRoll, GameState } from "../types/game";
-import { PropertySquare } from "../types/board";
 import {
-  canBuildHotel,
-  canBuildHouse,
-  canMortgageProperty,
-  canSellHotel,
-  canSellHouse,
-  canUnmortgageProperty,
-  getMortgageValue,
-  getOwnedPropertyRecord,
-  getUnmortgageCost,
-  isColorProperty,
-} from "../engine/rules/improvements";
-import { calculateRentForProperty } from "../engine/rules/rent";
-import {
+  controlBodyTextClass,
+  controlHeaderKickerClass,
+  controlHeaderTitleClass,
+  controlMutedTextClass,
   controlPanelClass,
   controlPrimaryButtonClass,
   controlSecondaryButtonClass,
-  controlHeaderKickerClass,
-  controlHeaderTitleClass,
 } from "./controlStyles";
 import { DiceRollDisplay } from "./DiceRollDisplay";
 
@@ -29,6 +18,8 @@ interface TurnControlsProps {
   displayedDiceRoll?: DiceRoll | null;
   isDiceRolling?: boolean;
   isTurnAnimating?: boolean;
+  onOpenAssets: () => void;
+  onOpenBuildings: () => void;
 }
 
 export function TurnControls({
@@ -37,33 +28,52 @@ export function TurnControls({
   displayedDiceRoll,
   isDiceRolling = false,
   isTurnAnimating = false,
+  onOpenAssets,
+  onOpenBuildings,
 }: TurnControlsProps) {
-  const canStart = state.status === "NOT_STARTED";
-  const canRoll =
-    state.status === "ACTIVE" &&
-    state.turnPhase === "ROLL_READY" &&
-    !isTurnAnimating;
-  const canEndTurn =
-    state.status === "ACTIVE" &&
-    state.turnPhase === "OPTIONAL_ACTIONS" &&
-    !isTurnAnimating;
-  const diceRollToDisplay = displayedDiceRoll ?? state.lastDiceRoll;
   const currentPlayer = state.players[state.currentPlayerIndex];
-  const manageableProperties = state.ownedProperties
-    .filter((ownedProperty) => ownedProperty.ownerId === currentPlayer.id)
-    .map((ownedProperty) => {
-      const square = state.board.find(
-        (candidate) => candidate.id === ownedProperty.propertyId,
-      );
+  const currentSquare = state.board[currentPlayer.position];
+  const ownedCurrentProperty =
+    currentSquare.type === "PROPERTY"
+      ? state.ownedProperties.find(
+          (ownedProperty) => ownedProperty.propertyId === currentSquare.id,
+        )
+      : null;
+  const playerOwnsAnyProperty = state.ownedProperties.some(
+    (ownedProperty) => ownedProperty.ownerId === currentPlayer.id,
+  );
 
-      return square?.type === "PROPERTY" ? square : null;
-    })
-    .filter((property): property is PropertySquare => Boolean(property));
+  const canStart = state.status === "NOT_STARTED";
+  const canAct =
+    state.status === "ACTIVE" && !isDiceRolling && !isTurnAnimating;
+  const canRoll = canAct && state.turnPhase === "ROLL_READY";
+  const canEndTurn = canAct && state.turnPhase === "OPTIONAL_ACTIONS";
+  const canMakePropertyDecision =
+    canAct &&
+    state.turnPhase === "PROPERTY_DECISION" &&
+    currentSquare.type === "PROPERTY" &&
+    !ownedCurrentProperty;
+  const canBuyProperty =
+    canMakePropertyDecision &&
+    currentSquare.type === "PROPERTY" &&
+    currentPlayer.cash >= currentSquare.price;
+  const canStartAuction = canMakePropertyDecision;
+  const isJailTurn =
+    state.status === "ACTIVE" &&
+    currentPlayer.jailState.isInJail &&
+    state.turnPhase === "ROLL_READY";
+  const canPayFine = canAct && isJailTurn && currentPlayer.cash >= JAIL_FINE;
+  const canUseJailCard =
+    canAct && isJailTurn && currentPlayer.getOutOfJailCards > 0;
+  const canRollForRelease = canAct && isJailTurn;
+  const diceRollToDisplay = displayedDiceRoll ?? state.lastDiceRoll;
+  const canManageBuildings =
+    canAct && state.turnPhase === "OPTIONAL_ACTIONS" && playerOwnsAnyProperty;
 
   return (
     <section className={controlPanelClass}>
       <div className="border-b border-slate-950 pb-3">
-        <p className={controlHeaderKickerClass}>Round Desk</p>
+        <p className={controlHeaderKickerClass}>Action Dock</p>
         <h2 className={controlHeaderTitleClass}>Turn Controls</h2>
       </div>
 
@@ -71,9 +81,25 @@ export function TurnControls({
         roll={diceRollToDisplay}
         isRolling={isDiceRolling}
         emptyMessage="No dice rolled yet."
+        title={isJailTurn ? "Jail Roll" : "Last Roll"}
       />
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className={controlBodyTextClass}>
+        <p>
+          Phase:{" "}
+          <strong className="uppercase tracking-wide">
+            {state.turnPhase.replaceAll("_", " ")}
+          </strong>
+        </p>
+        {currentPlayer.jailState.isInJail && (
+          <p className={controlMutedTextClass}>
+            Jail attempts: {currentPlayer.jailState.turnsAttempted} /{" "}
+            {MAX_JAIL_ATTEMPTS}
+          </p>
+        )}
+      </div>
+
+      <div className="mt-4 grid min-h-[278px] auto-rows-fr grid-cols-2 gap-2">
         <button
           className={controlPrimaryButtonClass}
           disabled={!canStart}
@@ -90,189 +116,75 @@ export function TurnControls({
         </button>
         <button
           className={controlPrimaryButtonClass}
+          disabled={!canBuyProperty || currentSquare.type !== "PROPERTY"}
+          onClick={() => {
+            if (currentSquare.type === "PROPERTY") {
+              dispatch({ type: "BUY_PROPERTY", propertyId: currentSquare.id });
+            }
+          }}
+        >
+          Buy Property
+        </button>
+        <button
+          className={controlSecondaryButtonClass}
+          disabled={!canStartAuction || currentSquare.type !== "PROPERTY"}
+          onClick={() => {
+            if (currentSquare.type === "PROPERTY") {
+              dispatch({
+                type: "DECLINE_PROPERTY",
+                propertyId: currentSquare.id,
+              });
+            }
+          }}
+        >
+          Decline (Start Auction)
+        </button>
+        <button
+          className={controlPrimaryButtonClass}
+          disabled={!canPayFine}
+          onClick={() => dispatch({ type: "PAY_TO_LEAVE_JAIL" })}
+        >
+          Pay Bail
+        </button>
+        <button
+          className={controlSecondaryButtonClass}
+          disabled={!canRollForRelease}
+          onClick={() => dispatch({ type: "ROLL_FOR_JAIL_RELEASE" })}
+        >
+          Attempt Doubles
+        </button>
+        <button
+          className={controlSecondaryButtonClass}
+          disabled={!canUseJailCard}
+          onClick={() => dispatch({ type: "USE_JAIL_CARD" })}
+        >
+          Use Jail Card
+        </button>
+        <button
+          className={controlPrimaryButtonClass}
           disabled={!canEndTurn}
           onClick={() => dispatch({ type: "END_TURN" })}
         >
           End Turn
         </button>
+        <button className={controlSecondaryButtonClass} onClick={onOpenAssets}>
+          View Assets
+        </button>
         <button
           className={controlSecondaryButtonClass}
-          onClick={() => dispatch({ type: "RESET_GAME" })}
+          disabled={!canManageBuildings}
+          onClick={onOpenBuildings}
         >
-          Reset Game
+          Manage Buildings
         </button>
       </div>
 
-      {manageableProperties.length > 0 && (
-        <div className="mt-4 border-t border-slate-950 pt-4">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-slate-500">
-            Properties
-          </p>
-
-          <div className="mt-3 space-y-3">
-            {manageableProperties.map((property) => {
-              const ownedProperty = getOwnedPropertyRecord(state, property.id);
-              const houseCheck = canBuildHouse(
-                state,
-                currentPlayer.id,
-                property.id,
-              );
-              const hotelCheck = canBuildHotel(
-                state,
-                currentPlayer.id,
-                property.id,
-              );
-              const sellHouseCheck = canSellHouse(
-                state,
-                currentPlayer.id,
-                property.id,
-              );
-              const sellHotelCheck = canSellHotel(
-                state,
-                currentPlayer.id,
-                property.id,
-              );
-              const mortgageCheck = canMortgageProperty(
-                state,
-                currentPlayer.id,
-                property.id,
-              );
-              const unmortgageCheck = canUnmortgageProperty(
-                state,
-                currentPlayer.id,
-                property.id,
-              );
-              const canUsePropertyActions =
-                state.status === "ACTIVE" &&
-                state.turnPhase === "OPTIONAL_ACTIONS" &&
-                !isTurnAnimating;
-
-              return (
-                <div
-                  key={property.id}
-                  className="border border-slate-300 bg-white p-3"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-black leading-tight">
-                        {property.name}
-                      </p>
-                      <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                        Rent ${calculateRentForProperty(
-                          state,
-                          property,
-                          currentPlayer.id,
-                        )}
-                        {ownedProperty?.mortgaged ? " · Mortgaged" : ""}
-                        {" · "}Mortgage ${getMortgageValue(property)}
-                        {" · "}Unmortgage ${getUnmortgageCost(property)}
-                      </p>
-                    </div>
-                    {isColorProperty(property) && (
-                      <p className="border border-slate-950 px-2 py-1 text-xs font-black">
-                        {ownedProperty?.hotel
-                          ? "Hotel"
-                          : `${ownedProperty?.houses ?? 0} houses`}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    {isColorProperty(property) && (
-                      <>
-                        <button
-                          className={controlSecondaryButtonClass}
-                          disabled={!canUsePropertyActions || !houseCheck.allowed}
-                          title={houseCheck.reason}
-                          onClick={() =>
-                            dispatch({
-                              type: "BUY_HOUSE",
-                              propertyId: property.id,
-                            })
-                          }
-                        >
-                          Buy House
-                        </button>
-                        <button
-                          className={controlSecondaryButtonClass}
-                          disabled={!canUsePropertyActions || !hotelCheck.allowed}
-                          title={hotelCheck.reason}
-                          onClick={() =>
-                            dispatch({
-                              type: "BUY_HOTEL",
-                              propertyId: property.id,
-                            })
-                          }
-                        >
-                          Buy Hotel
-                        </button>
-                        <button
-                          className={controlSecondaryButtonClass}
-                          disabled={
-                            !canUsePropertyActions || !sellHouseCheck.allowed
-                          }
-                          title={sellHouseCheck.reason}
-                          onClick={() =>
-                            dispatch({
-                              type: "SELL_HOUSE",
-                              propertyId: property.id,
-                            })
-                          }
-                        >
-                          Sell House
-                        </button>
-                        <button
-                          className={controlSecondaryButtonClass}
-                          disabled={
-                            !canUsePropertyActions || !sellHotelCheck.allowed
-                          }
-                          title={sellHotelCheck.reason}
-                          onClick={() =>
-                            dispatch({
-                              type: "SELL_HOTEL",
-                              propertyId: property.id,
-                            })
-                          }
-                        >
-                          Sell Hotel
-                        </button>
-                      </>
-                    )}
-                    <button
-                      className={controlSecondaryButtonClass}
-                      disabled={!canUsePropertyActions || !mortgageCheck.allowed}
-                      title={mortgageCheck.reason}
-                      onClick={() =>
-                        dispatch({
-                          type: "MORTGAGE_PROPERTY",
-                          propertyId: property.id,
-                        })
-                      }
-                    >
-                      Mortgage
-                    </button>
-                    <button
-                      className={controlSecondaryButtonClass}
-                      disabled={
-                        !canUsePropertyActions || !unmortgageCheck.allowed
-                      }
-                      title={unmortgageCheck.reason}
-                      onClick={() =>
-                        dispatch({
-                          type: "UNMORTGAGE_PROPERTY",
-                          propertyId: property.id,
-                        })
-                      }
-                    >
-                      Unmortgage
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      <button
+        className={`${controlSecondaryButtonClass} mt-3`}
+        onClick={() => dispatch({ type: "RESET_GAME" })}
+      >
+        Reset Game
+      </button>
     </section>
   );
 }
