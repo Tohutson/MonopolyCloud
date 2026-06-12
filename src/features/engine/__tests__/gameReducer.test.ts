@@ -521,6 +521,9 @@ describe("gameReducer", () => {
         {
           propertyId: "mediterranean-avenue",
           ownerId: "player-1",
+          houses: 0,
+          hotel: false,
+          isMortgaged: false,
         },
       ]);
       expect(getPropertyOwnerId(nextState, "mediterranean-avenue")).toBe(
@@ -841,6 +844,9 @@ describe("gameReducer", () => {
         {
           propertyId: "mediterranean-avenue",
           ownerId: "player-1",
+          houses: 0,
+          hotel: false,
+          isMortgaged: false,
         },
       ]);
       expect(getPropertyOwnerId(nextState, "mediterranean-avenue")).toBe(

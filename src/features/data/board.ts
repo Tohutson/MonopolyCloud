@@ -1,5 +1,57 @@
 import { BoardSquare } from "../types/board";
 
+const rentTiers = {
+  "mediterranean-avenue": [2, 10, 30, 90, 160, 250],
+  "baltic-avenue": [4, 20, 60, 180, 320, 450],
+  "oriental-avenue": [6, 30, 90, 270, 400, 550],
+  "vermont-avenue": [6, 30, 90, 270, 400, 550],
+  "connecticut-avenue": [8, 40, 100, 300, 450, 600],
+  "st-charles-place": [10, 50, 150, 450, 625, 750],
+  "states-avenue": [10, 50, 150, 450, 625, 750],
+  "virginia-avenue": [12, 60, 180, 500, 700, 900],
+  "st-james-place": [14, 70, 200, 550, 750, 950],
+  "tennessee-avenue": [14, 70, 200, 550, 750, 950],
+  "new-york-avenue": [16, 80, 220, 600, 800, 1000],
+  "kentucky-avenue": [18, 90, 250, 700, 875, 1050],
+  "indiana-avenue": [18, 90, 250, 700, 875, 1050],
+  "illinois-avenue": [20, 100, 300, 750, 925, 1100],
+  "atlantic-avenue": [22, 110, 330, 800, 975, 1150],
+  "ventnor-avenue": [22, 110, 330, 800, 975, 1150],
+  "marvin-gardens": [24, 120, 360, 850, 1025, 1200],
+  "pacific-avenue": [26, 130, 390, 900, 1100, 1275],
+  "north-carolina-avenue": [26, 130, 390, 900, 1100, 1275],
+  "pennsylvania-avenue": [28, 150, 450, 1000, 1200, 1400],
+  "park-place": [35, 175, 500, 1100, 1300, 1500],
+  "boardwalk": [50, 200, 600, 1400, 1700, 2000],
+} as const;
+
+function deedRent(propertyId: keyof typeof rentTiers) {
+  const [base, oneHouse, twoHouses, threeHouses, fourHouses, hotel] =
+    rentTiers[propertyId];
+
+  return {
+    base,
+    oneHouse,
+    twoHouses,
+    threeHouses,
+    fourHouses,
+    hotel,
+  };
+}
+
+function buildingCost(colorGroup: string): number {
+  if (colorGroup === "brown" || colorGroup === "light-blue") {
+    return 50;
+  }
+  if (colorGroup === "pink" || colorGroup === "orange") {
+    return 100;
+  }
+  if (colorGroup === "red" || colorGroup === "yellow") {
+    return 150;
+  }
+  return 200;
+}
+
 export const board: BoardSquare[] = [
   {
     id: "go",
@@ -14,6 +66,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 60,
     rent: 2,
+    rentTiers: deedRent("mediterranean-avenue"),
+    buildingCost: buildingCost("brown"),
     colorGroup: "brown",
   },
   {
@@ -29,6 +83,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 60,
     rent: 4,
+    rentTiers: deedRent("baltic-avenue"),
+    buildingCost: buildingCost("brown"),
     colorGroup: "brown",
   },
   {
@@ -53,6 +109,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 100,
     rent: 6,
+    rentTiers: deedRent("oriental-avenue"),
+    buildingCost: buildingCost("light-blue"),
     colorGroup: "light-blue",
   },
   {
@@ -68,6 +126,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 100,
     rent: 6,
+    rentTiers: deedRent("vermont-avenue"),
+    buildingCost: buildingCost("light-blue"),
     colorGroup: "light-blue",
   },
   {
@@ -77,6 +137,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 120,
     rent: 8,
+    rentTiers: deedRent("connecticut-avenue"),
+    buildingCost: buildingCost("light-blue"),
     colorGroup: "light-blue",
   },
   {
@@ -92,6 +154,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 140,
     rent: 10,
+    rentTiers: deedRent("st-charles-place"),
+    buildingCost: buildingCost("pink"),
     colorGroup: "pink",
   },
   {
@@ -110,6 +174,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 140,
     rent: 10,
+    rentTiers: deedRent("states-avenue"),
+    buildingCost: buildingCost("pink"),
     colorGroup: "pink",
   },
   {
@@ -119,6 +185,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 160,
     rent: 12,
+    rentTiers: deedRent("virginia-avenue"),
+    buildingCost: buildingCost("pink"),
     colorGroup: "pink",
   },
   {
@@ -137,6 +205,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 180,
     rent: 14,
+    rentTiers: deedRent("st-james-place"),
+    buildingCost: buildingCost("orange"),
     colorGroup: "orange",
   },
   {
@@ -152,6 +222,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 180,
     rent: 14,
+    rentTiers: deedRent("tennessee-avenue"),
+    buildingCost: buildingCost("orange"),
     colorGroup: "orange",
   },
   {
@@ -161,6 +233,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 200,
     rent: 16,
+    rentTiers: deedRent("new-york-avenue"),
+    buildingCost: buildingCost("orange"),
     colorGroup: "orange",
   },
   {
@@ -176,6 +250,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 220,
     rent: 18,
+    rentTiers: deedRent("kentucky-avenue"),
+    buildingCost: buildingCost("red"),
     colorGroup: "red",
   },
   {
@@ -191,6 +267,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 220,
     rent: 18,
+    rentTiers: deedRent("indiana-avenue"),
+    buildingCost: buildingCost("red"),
     colorGroup: "red",
   },
   {
@@ -200,6 +278,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 240,
     rent: 20,
+    rentTiers: deedRent("illinois-avenue"),
+    buildingCost: buildingCost("red"),
     colorGroup: "red",
   },
   {
@@ -218,6 +298,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 260,
     rent: 22,
+    rentTiers: deedRent("atlantic-avenue"),
+    buildingCost: buildingCost("yellow"),
     colorGroup: "yellow",
   },
   {
@@ -227,6 +309,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 260,
     rent: 22,
+    rentTiers: deedRent("ventnor-avenue"),
+    buildingCost: buildingCost("yellow"),
     colorGroup: "yellow",
   },
   {
@@ -245,6 +329,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 280,
     rent: 24,
+    rentTiers: deedRent("marvin-gardens"),
+    buildingCost: buildingCost("yellow"),
     colorGroup: "yellow",
   },
   {
@@ -260,6 +346,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 300,
     rent: 26,
+    rentTiers: deedRent("pacific-avenue"),
+    buildingCost: buildingCost("green"),
     colorGroup: "green",
   },
   {
@@ -269,6 +357,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 300,
     rent: 26,
+    rentTiers: deedRent("north-carolina-avenue"),
+    buildingCost: buildingCost("green"),
     colorGroup: "green",
   },
   {
@@ -284,6 +374,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 320,
     rent: 28,
+    rentTiers: deedRent("pennsylvania-avenue"),
+    buildingCost: buildingCost("green"),
     colorGroup: "green",
   },
   {
@@ -308,6 +400,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 350,
     rent: 35,
+    rentTiers: deedRent("park-place"),
+    buildingCost: buildingCost("dark-blue"),
     colorGroup: "dark-blue",
   },
   {
@@ -323,6 +417,8 @@ export const board: BoardSquare[] = [
     type: "PROPERTY",
     price: 400,
     rent: 50,
+    rentTiers: deedRent("boardwalk"),
+    buildingCost: buildingCost("dark-blue"),
     colorGroup: "dark-blue",
   },
 ];

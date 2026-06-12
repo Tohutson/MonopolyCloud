@@ -1,11 +1,22 @@
 import { GameState } from "@/features/types/game";
 import { PropertySquare } from "@/features/types/board";
+import {
+  getOwnedPropertyRecord,
+  hasMortgageInColorGroup,
+  isColorProperty,
+  ownsFullColorGroup,
+} from "./improvements";
 
 export function calculateRentForProperty(
   state: GameState,
   property: PropertySquare,
   ownerId: string,
 ): number {
+  const ownedProperty = getOwnedPropertyRecord(state, property.id);
+  if (ownedProperty?.isMortgaged) {
+    return 0;
+  }
+
   if (property.colorGroup === "railroad") {
     const railroadCount = countOwnedPropertiesInGroup(
       state,
@@ -23,6 +34,29 @@ export function calculateRentForProperty(
     const multiplier = utilityCount === 1 ? 4 : 10;
     return diceRoll.total * multiplier;
   }
+
+  if (isColorProperty(property)) {
+    if (ownedProperty?.hotel) {
+      return property.rentTiers.hotel;
+    }
+
+    switch (ownedProperty?.houses ?? 0) {
+      case 1:
+        return property.rentTiers.oneHouse;
+      case 2:
+        return property.rentTiers.twoHouses;
+      case 3:
+        return property.rentTiers.threeHouses;
+      case 4:
+        return property.rentTiers.fourHouses;
+      default:
+        return ownsFullColorGroup(state, ownerId, property.colorGroup) &&
+          !hasMortgageInColorGroup(state, property.colorGroup)
+          ? property.rentTiers.base * 2
+          : property.rentTiers.base;
+    }
+  }
+
   return property.rent;
 }
 

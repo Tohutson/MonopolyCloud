@@ -246,6 +246,9 @@ function completeAuctionWithWinner(
       {
         propertyId: property.id,
         ownerId: winner.id,
+        houses: 0,
+        hotel: false,
+        isMortgaged: false,
       },
     ],
     auctionState: null,

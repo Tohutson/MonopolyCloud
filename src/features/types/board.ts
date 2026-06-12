@@ -22,6 +22,15 @@ export interface PropertySquare extends BaseBoardSquare {
   type: "PROPERTY";
   price: number;
   rent: number;
+  rentTiers?: {
+    base: number;
+    oneHouse: number;
+    twoHouses: number;
+    threeHouses: number;
+    fourHouses: number;
+    hotel: number;
+  };
+  buildingCost?: number;
   colorGroup: string;
 }
 

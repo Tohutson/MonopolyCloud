@@ -60,6 +60,88 @@ describe("calculateRentForProperty", () => {
     expect(rent).toBe(2);
   });
 
+  it("doubles base rent for an unimproved monopoly with no mortgages", () => {
+    const state = stateWithOwnedProperties(
+      ["mediterranean-avenue", "baltic-avenue"],
+      "player-2",
+    );
+
+    const rent = calculateRentForProperty(
+      state,
+      propertySquareById("mediterranean-avenue"),
+      "player-2",
+    );
+
+    expect(rent).toBe(4);
+  });
+
+  it.each([
+    { houses: 1, expectedRent: 200 },
+    { houses: 2, expectedRent: 600 },
+    { houses: 3, expectedRent: 1400 },
+    { houses: 4, expectedRent: 1700 },
+  ])("charges $expectedRent rent with $houses house(s)", ({ houses, expectedRent }) => {
+    const state = markPropertyOwned(
+      markPropertyOwned(createActiveGameForTest(), "park-place", "player-2"),
+      "boardwalk",
+      "player-2",
+      { houses },
+    );
+
+    const rent = calculateRentForProperty(
+      state,
+      propertySquareById("boardwalk"),
+      "player-2",
+    );
+
+    expect(rent).toBe(expectedRent);
+  });
+
+  it("charges hotel rent", () => {
+    const state = markPropertyOwned(
+      markPropertyOwned(createActiveGameForTest(), "park-place", "player-2"),
+      "boardwalk",
+      "player-2",
+      { hotel: true },
+    );
+
+    const rent = calculateRentForProperty(
+      state,
+      propertySquareById("boardwalk"),
+      "player-2",
+    );
+
+    expect(rent).toBe(2000);
+  });
+
+  it("collects no rent from mortgaged property and skips double rent with a group mortgage", () => {
+    const state = markPropertyOwned(
+      markPropertyOwned(
+        createActiveGameForTest(),
+        "mediterranean-avenue",
+        "player-2",
+        { isMortgaged: true },
+      ),
+      "baltic-avenue",
+      "player-2",
+    );
+
+    expect(
+      calculateRentForProperty(
+        state,
+        propertySquareById("mediterranean-avenue"),
+        "player-2",
+      ),
+    ).toBe(0);
+    expect(
+      calculateRentForProperty(
+        state,
+        propertySquareById("baltic-avenue"),
+        "player-2",
+      ),
+    ).toBe(4);
+  });
+
   it("does not count non-railroad properties toward railroad rent", () => {
     const state = stateWithOwnedProperties(
       ["reading-railroad", "mediterranean-avenue", "electric-company"],

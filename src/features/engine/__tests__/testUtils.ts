@@ -1,6 +1,6 @@
 import { board } from "../../data/board";
 import { BoardSquare, PropertySquare } from "../../types/board";
-import { GameState } from "../../types/game";
+import { GameState, OwnedProperty } from "../../types/game";
 import { PlayerStatus } from "../../types/player";
 import { createInitialGame } from "../createInitialGame";
 
@@ -86,10 +86,14 @@ export function markPropertyOwned(
   state: GameState,
   propertyId: string,
   ownerId: string,
+  fields: Partial<OwnedProperty> = {},
 ): GameState {
   return {
     ...state,
-    ownedProperties: [...state.ownedProperties, { propertyId, ownerId }],
+    ownedProperties: [
+      ...state.ownedProperties,
+      { propertyId, ownerId, ...fields },
+    ],
   };
 }
 

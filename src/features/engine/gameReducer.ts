@@ -17,6 +17,14 @@ import {
   playGetOutOfJailCard,
   attemptJailRoll,
 } from "./actions/jailActions";
+import {
+  buyHotelAction,
+  buyHouseAction,
+  mortgagePropertyAction,
+  sellHotelAction,
+  sellHouseAction,
+  unmortgagePropertyAction,
+} from "./actions/improvementActions";
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
@@ -37,6 +45,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "DECLINE_PROPERTY":
       return declinePropertyAction(state, action.propertyId);
+
+    case "BUY_HOUSE":
+      return buyHouseAction(state, action.propertyId);
+
+    case "BUY_HOTEL":
+      return buyHotelAction(state, action.propertyId);
+
+    case "SELL_HOUSE":
+      return sellHouseAction(state, action.propertyId);
+
+    case "SELL_HOTEL":
+      return sellHotelAction(state, action.propertyId);
+
+    case "MORTGAGE_PROPERTY":
+      return mortgagePropertyAction(state, action.propertyId);
+
+    case "UNMORTGAGE_PROPERTY":
+      return unmortgagePropertyAction(state, action.propertyId);
 
     case "PLACE_AUCTION_BID":
       return placeAuctionBidAction(state, action.bidderId, action.amount);

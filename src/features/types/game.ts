@@ -7,6 +7,9 @@ export type GameStatus = "NOT_STARTED" | "ACTIVE" | "FINISHED";
 export interface OwnedProperty {
   propertyId: string;
   ownerId: string;
+  houses?: number;
+  hotel?: boolean;
+  isMortgaged?: boolean;
 }
 
 export interface DiceRoll {

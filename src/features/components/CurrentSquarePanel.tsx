@@ -1,6 +1,10 @@
 import { BoardSquare } from "../types/board";
 import { OwnedProperty } from "../types/game";
 import { Player } from "../types/player";
+import {
+  isColorProperty,
+  normalizeOwnedProperty,
+} from "../engine/rules/improvements";
 
 interface CurrentSquarePanelProps {
   currentPlayer: Player;
@@ -22,6 +26,9 @@ export function CurrentSquarePanel({
   isAuctionPending,
 }: CurrentSquarePanelProps) {
   const isProperty = currentSquare.type === "PROPERTY";
+  const normalizedOwnedProperty = ownedProperty
+    ? normalizeOwnedProperty(ownedProperty)
+    : null;
 
   return (
     <section className="border border-slate-950 bg-white p-4 shadow-[4px_4px_0_#d6a531]">
@@ -96,6 +103,44 @@ export function CurrentSquarePanel({
                 {currentSquare.colorGroup}
               </dd>
             </div>
+
+            {isColorProperty(currentSquare) && (
+              <>
+                <div className="bg-white p-3">
+                  <dt className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Buildings
+                  </dt>
+                  <dd className="mt-1 font-black">
+                    {normalizedOwnedProperty?.hotel
+                      ? "Hotel"
+                      : `${normalizedOwnedProperty?.houses ?? 0} houses`}
+                  </dd>
+                </div>
+
+                <div className="bg-white p-3">
+                  <dt className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Build Cost
+                  </dt>
+                  <dd className="mt-1 font-black">
+                    ${currentSquare.buildingCost}
+                  </dd>
+                </div>
+
+                <div className="col-span-2 bg-white p-3">
+                  <dt className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Rent Tiers
+                  </dt>
+                  <dd className="mt-1 text-xs font-bold leading-relaxed text-slate-700">
+                    Base ${currentSquare.rentTiers.base} · 1H $
+                    {currentSquare.rentTiers.oneHouse} · 2H $
+                    {currentSquare.rentTiers.twoHouses} · 3H $
+                    {currentSquare.rentTiers.threeHouses} · 4H $
+                    {currentSquare.rentTiers.fourHouses} · Hotel $
+                    {currentSquare.rentTiers.hotel}
+                  </dd>
+                </div>
+              </>
+            )}
           </dl>
 
           {!ownedProperty && (
@@ -121,6 +166,11 @@ export function CurrentSquarePanel({
                 </span>
                 .
               </p>
+              {normalizedOwnedProperty?.isMortgaged && (
+                <p className="mt-2 text-sm font-black uppercase tracking-wide text-red-700">
+                  Mortgaged
+                </p>
+              )}
             </div>
           )}
         </div>

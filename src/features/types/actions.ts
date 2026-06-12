@@ -5,6 +5,12 @@ export type GameAction =
   | { type: "RESOLVE_SQUARE" }
   | { type: "BUY_PROPERTY"; propertyId: string }
   | { type: "DECLINE_PROPERTY"; propertyId: string }
+  | { type: "BUY_HOUSE"; propertyId: string }
+  | { type: "BUY_HOTEL"; propertyId: string }
+  | { type: "SELL_HOUSE"; propertyId: string }
+  | { type: "SELL_HOTEL"; propertyId: string }
+  | { type: "MORTGAGE_PROPERTY"; propertyId: string }
+  | { type: "UNMORTGAGE_PROPERTY"; propertyId: string }
   | { type: "PLACE_AUCTION_BID"; bidderId: string; amount: number }
   | { type: "PASS_AUCTION_BID"; bidderId: string }
   | { type: "END_TURN" }
