@@ -88,11 +88,20 @@ export function markPropertyOwned(
   ownerId: string,
   fields: Partial<OwnedProperty> = {},
 ): GameState {
+  const mortgaged = fields.mortgaged ?? fields.isMortgaged ?? false;
+
   return {
     ...state,
     ownedProperties: [
       ...state.ownedProperties,
-      { propertyId, ownerId, ...fields },
+      {
+        propertyId,
+        ownerId,
+        houses: 0,
+        hotel: false,
+        ...fields,
+        mortgaged,
+      },
     ],
   };
 }

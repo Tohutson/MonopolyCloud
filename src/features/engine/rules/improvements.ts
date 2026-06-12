@@ -7,22 +7,30 @@ export interface ImprovementCheck {
   reason?: string;
 }
 
+export interface NormalizedOwnedProperty {
+  propertyId: string;
+  ownerId: string;
+  houses: number;
+  hotel: boolean;
+  mortgaged: boolean;
+}
+
 export function normalizeOwnedProperty(
   ownedProperty: OwnedProperty,
-): Required<OwnedProperty> {
+): NormalizedOwnedProperty {
   return {
     propertyId: ownedProperty.propertyId,
     ownerId: ownedProperty.ownerId,
     houses: ownedProperty.houses ?? 0,
     hotel: ownedProperty.hotel ?? false,
-    isMortgaged: ownedProperty.isMortgaged ?? false,
+    mortgaged: ownedProperty.mortgaged ?? ownedProperty.isMortgaged ?? false,
   };
 }
 
 export function getOwnedPropertyRecord(
   state: GameState,
   propertyId: string,
-): Required<OwnedProperty> | null {
+): NormalizedOwnedProperty | null {
   const ownedProperty = state.ownedProperties.find(
     (property) => property.propertyId === propertyId,
   );
@@ -75,12 +83,26 @@ export function hasMortgageInColorGroup(
   state: GameState,
   color: string,
 ): boolean {
+  return colorGroupHasMortgagedProperty(state, color);
+}
+
+export function colorGroupHasMortgagedProperty(
+  state: GameState,
+  color: string,
+): boolean {
   return getColorGroupProperties(state, color).some(
-    (property) => getOwnedPropertyRecord(state, property.id)?.isMortgaged,
+    (property) => getOwnedPropertyRecord(state, property.id)?.mortgaged,
   );
 }
 
 export function hasImprovementInColorGroup(
+  state: GameState,
+  color: string,
+): boolean {
+  return colorGroupHasBuildings(state, color);
+}
+
+export function colorGroupHasBuildings(
   state: GameState,
   color: string,
 ): boolean {
@@ -91,6 +113,32 @@ export function hasImprovementInColorGroup(
         (ownedProperty.houses > 0 || ownedProperty.hotel),
     );
   });
+}
+
+export function canBuildOnProperty(
+  state: GameState,
+  playerId: string,
+  propertyId: string,
+): ImprovementCheck {
+  const property = getProperty(state, propertyId);
+  if (!property || !isColorProperty(property)) {
+    return { allowed: false, reason: "Only color properties can have buildings." };
+  }
+
+  const ownedProperty = getOwnedPropertyRecord(state, propertyId);
+  if (!ownedProperty || ownedProperty.ownerId !== playerId) {
+    return { allowed: false, reason: "Player does not own this property." };
+  }
+
+  if (!ownsFullColorGroup(state, playerId, property.colorGroup)) {
+    return { allowed: false, reason: "Full color group is required." };
+  }
+
+  if (colorGroupHasMortgagedProperty(state, property.colorGroup)) {
+    return { allowed: false, reason: "A property in this group is mortgaged." };
+  }
+
+  return { allowed: true };
 }
 
 export function canBuildHouse(
@@ -270,7 +318,7 @@ export function canMortgageProperty(
     return { allowed: false, reason: "Player does not own this property." };
   }
 
-  if (ownedProperty.isMortgaged) {
+  if (ownedProperty.mortgaged) {
     return { allowed: false, reason: "This property is already mortgaged." };
   }
 
@@ -302,7 +350,7 @@ export function canUnmortgageProperty(
     return { allowed: false, reason: "Player does not own this property." };
   }
 
-  if (!ownedProperty.isMortgaged) {
+  if (!ownedProperty.mortgaged) {
     return { allowed: false, reason: "This property is not mortgaged." };
   }
 
@@ -315,11 +363,75 @@ export function canUnmortgageProperty(
 }
 
 export function getMortgageValue(property: PropertySquare): number {
-  return Math.floor(property.price / 2);
+  return property.mortgageValue;
 }
 
 export function getUnmortgageCost(property: PropertySquare): number {
-  return Math.ceil(getMortgageValue(property) * 1.1);
+  return Math.round(getMortgageValue(property) * 1.1);
+}
+
+export function getMortgageValueForProperty(
+  state: GameState,
+  propertyId: string,
+): number | null {
+  const property = getProperty(state, propertyId);
+
+  return property ? getMortgageValue(property) : null;
+}
+
+export function getUnmortgageCostForProperty(
+  state: GameState,
+  propertyId: string,
+): number | null {
+  const property = getProperty(state, propertyId);
+
+  return property ? getUnmortgageCost(property) : null;
+}
+
+export function getPlayerMortgageableProperties(
+  state: GameState,
+  playerId: string,
+): NormalizedOwnedProperty[] {
+  return getPlayerOwnedPropertyRecords(state, playerId).filter((ownedProperty) =>
+    canMortgageProperty(state, playerId, ownedProperty.propertyId).allowed,
+  );
+}
+
+export function getPlayerMortgagedProperties(
+  state: GameState,
+  playerId: string,
+): NormalizedOwnedProperty[] {
+  return getPlayerOwnedPropertyRecords(state, playerId).filter(
+    (ownedProperty) => ownedProperty.mortgaged,
+  );
+}
+
+export function getPlayerPotentialMortgageCash(
+  state: GameState,
+  playerId: string,
+): number {
+  return getPlayerMortgageableProperties(state, playerId).reduce(
+    (total, ownedProperty) =>
+      total + (getMortgageValueForProperty(state, ownedProperty.propertyId) ?? 0),
+    0,
+  );
+}
+
+export function canPlayerRaiseCashViaMortgages(
+  state: GameState,
+  playerId: string,
+  amountNeeded: number,
+): boolean {
+  return getPlayerPotentialMortgageCash(state, playerId) >= amountNeeded;
+}
+
+function getPlayerOwnedPropertyRecords(
+  state: GameState,
+  playerId: string,
+): NormalizedOwnedProperty[] {
+  return state.ownedProperties
+    .filter((ownedProperty) => ownedProperty.ownerId === playerId)
+    .map(normalizeOwnedProperty);
 }
 
 function getProperty(

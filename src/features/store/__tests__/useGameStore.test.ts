@@ -80,6 +80,9 @@ describe("useGameStore", () => {
           {
             propertyId: "boardwalk",
             ownerId: "player-1",
+            houses: 0,
+            hotel: false,
+            mortgaged: false,
           },
         ],
         log: [{ id: "test-log", message: "Previous event." }],

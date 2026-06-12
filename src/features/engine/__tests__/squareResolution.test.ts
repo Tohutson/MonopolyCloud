@@ -128,6 +128,85 @@ describe("resolveLandedSquare", () => {
     );
   });
 
+  it("does not charge rent when landing on a mortgaged color property", () => {
+    const state = markPropertyOwned(
+      setCurrentPlayerPosition(createActiveGameForTest(), 39),
+      "boardwalk",
+      "player-2",
+      { mortgaged: true },
+    );
+
+    const nextState = resolveLandedSquare(state);
+
+    expect(nextState.players[0].cash).toBe(1500);
+    expect(nextState.players[1].cash).toBe(1500);
+    expect(nextState.log[0].message).toBe(
+      "Player 1 landed on mortgaged Boardwalk. No rent was owed.",
+    );
+  });
+
+  it("does not charge rent when landing on a mortgaged railroad", () => {
+    const state = markPropertyOwned(
+      markPropertyOwned(
+        setCurrentPlayerPosition(createActiveGameForTest(), 5),
+        "reading-railroad",
+        "player-2",
+        { mortgaged: true },
+      ),
+      "pennsylvania-railroad",
+      "player-2",
+    );
+
+    const nextState = resolveLandedSquare(state);
+
+    expect(nextState.players[0].cash).toBe(1500);
+    expect(nextState.players[1].cash).toBe(1500);
+    expect(nextState.log[0].message).toBe(
+      "Player 1 landed on mortgaged Reading Railroad. No rent was owed.",
+    );
+  });
+
+  it("does not charge rent when landing on a mortgaged utility", () => {
+    const state = setLastDiceRoll(
+      markPropertyOwned(
+        markPropertyOwned(
+          setCurrentPlayerPosition(createActiveGameForTest(), 12),
+          "electric-company",
+          "player-2",
+          { mortgaged: true },
+        ),
+        "water-works",
+        "player-2",
+      ),
+      7,
+    );
+
+    const nextState = resolveLandedSquare(state);
+
+    expect(nextState.players[0].cash).toBe(1500);
+    expect(nextState.players[1].cash).toBe(1500);
+    expect(nextState.log[0].message).toBe(
+      "Player 1 landed on mortgaged Electric Company. No rent was owed.",
+    );
+  });
+
+  it("charges rent again after a property is unmortgaged", () => {
+    const state = markPropertyOwned(
+      setCurrentPlayerPosition(createActiveGameForTest(), 39),
+      "boardwalk",
+      "player-2",
+      { mortgaged: false },
+    );
+
+    const nextState = resolveLandedSquare(state);
+
+    expect(nextState.players[0].cash).toBe(1450);
+    expect(nextState.players[1].cash).toBe(1550);
+    expect(nextState.log[0].message).toBe(
+      "Player 1 paid $50 rent to Player 2 for Boardwalk.",
+    );
+  });
+
   it("does not charge rent on the current player's own railroad", () => {
     const state = markPropertyOwned(
       setCurrentPlayerPosition(createActiveGameForTest(), 5),

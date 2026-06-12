@@ -6,7 +6,7 @@ import {
 } from "./constants";
 import { addLog } from "./logging";
 import { chargeCurrentPlayer, payRent } from "./payments";
-import { getPropertyOwnerId } from "./ownership";
+import { getPropertyOwnerId, isPropertyMortgaged } from "./ownership";
 import { calculateRentForProperty } from "./rent";
 import { drawAndExecuteCard } from "../cards/drawAndExecuteCard";
 import { sendCurrentPlayerToJail } from "./jail";
@@ -43,6 +43,16 @@ export function resolveLandedSquare(state: GameState): GameState {
           log: addLog(
             state,
             `${currentPlayer.name} landed on their own property, ${square.name}.`,
+          ),
+        };
+      }
+
+      if (isPropertyMortgaged(state, square.id)) {
+        return {
+          ...state,
+          log: addLog(
+            state,
+            `${currentPlayer.name} landed on mortgaged ${square.name}. No rent was owed.`,
           ),
         };
       }

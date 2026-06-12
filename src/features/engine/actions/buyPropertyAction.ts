@@ -62,7 +62,7 @@ export function buyPropertyAction(
       ownerId: currentPlayer.id,
       houses: 0,
       hotel: false,
-      isMortgaged: false,
+      mortgaged: false,
     },
   ];
 

@@ -13,7 +13,7 @@ export function calculateRentForProperty(
   ownerId: string,
 ): number {
   const ownedProperty = getOwnedPropertyRecord(state, property.id);
-  if (ownedProperty?.isMortgaged) {
+  if (ownedProperty?.mortgaged) {
     return 0;
   }
 

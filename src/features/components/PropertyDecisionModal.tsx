@@ -54,6 +54,14 @@ export function PropertyDecisionModal({
             </div>
             <div className="bg-white p-3">
               <dt className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                Mortgage
+              </dt>
+              <dd className="mt-1 text-lg font-black">
+                ${property.mortgageValue}
+              </dd>
+            </div>
+            <div className="bg-white p-3">
+              <dt className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
                 Cash
               </dt>
               <dd className="mt-1 text-lg font-black">${currentPlayer.cash}</dd>

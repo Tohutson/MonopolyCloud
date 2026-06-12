@@ -21,6 +21,7 @@ export interface NonPropertySquare extends BaseBoardSquare {
 export interface PropertySquare extends BaseBoardSquare {
   type: "PROPERTY";
   price: number;
+  mortgageValue: number;
   rent: number;
   rentTiers?: {
     base: number;

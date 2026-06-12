@@ -9,6 +9,7 @@ export interface OwnedProperty {
   ownerId: string;
   houses?: number;
   hotel?: boolean;
+  mortgaged: boolean;
   isMortgaged?: boolean;
 }
 

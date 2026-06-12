@@ -2,6 +2,7 @@ import { BoardSquare } from "../types/board";
 import { OwnedProperty } from "../types/game";
 import { Player } from "../types/player";
 import {
+  getUnmortgageCost,
   isColorProperty,
   normalizeOwnedProperty,
 } from "../engine/rules/improvements";
@@ -88,6 +89,24 @@ export function CurrentSquarePanel({
 
             <div className="bg-white p-3">
               <dt className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                Mortgage
+              </dt>
+              <dd className="mt-1 font-black">
+                ${currentSquare.mortgageValue}
+              </dd>
+            </div>
+
+            <div className="bg-white p-3">
+              <dt className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                Unmortgage
+              </dt>
+              <dd className="mt-1 font-black">
+                ${getUnmortgageCost(currentSquare)}
+              </dd>
+            </div>
+
+            <div className="bg-white p-3">
+              <dt className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
                 Owner
               </dt>
               <dd className="mt-1 font-black">
@@ -166,7 +185,7 @@ export function CurrentSquarePanel({
                 </span>
                 .
               </p>
-              {normalizedOwnedProperty?.isMortgaged && (
+              {normalizedOwnedProperty?.mortgaged && (
                 <p className="mt-2 text-sm font-black uppercase tracking-wide text-red-700">
                   Mortgaged
                 </p>

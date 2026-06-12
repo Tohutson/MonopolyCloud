@@ -1,5 +1,5 @@
 import { PropertySquare } from "@/features/types/board";
-import { GameState, OwnedProperty } from "@/features/types/game";
+import { GameState } from "@/features/types/game";
 import { addLog } from "../rules/logging";
 import {
   canBuildHotel,
@@ -10,6 +10,7 @@ import {
   canUnmortgageProperty,
   getMortgageValue,
   getUnmortgageCost,
+  NormalizedOwnedProperty,
   normalizeOwnedProperty,
 } from "../rules/improvements";
 
@@ -166,11 +167,11 @@ export function mortgagePropertyAction(
     players: updatePlayerCash(state, currentPlayer.id, mortgageValue),
     ownedProperties: updateOwnedProperty(state, propertyId, (ownedProperty) => ({
       ...ownedProperty,
-      isMortgaged: true,
+      mortgaged: true,
     })),
     log: addLog(
       state,
-      `${currentPlayer.name} mortgaged ${property.name} for $${mortgageValue}.`,
+      `${currentPlayer.name} mortgaged ${property.name} and received $${mortgageValue}.`,
     ),
   };
 }
@@ -197,7 +198,7 @@ export function unmortgagePropertyAction(
     players: updatePlayerCash(state, currentPlayer.id, -unmortgageCost),
     ownedProperties: updateOwnedProperty(state, propertyId, (ownedProperty) => ({
       ...ownedProperty,
-      isMortgaged: false,
+      mortgaged: false,
     })),
     log: addLog(
       state,
@@ -232,7 +233,7 @@ function updatePlayerCash(
 function updateOwnedProperty(
   state: GameState,
   propertyId: string,
-  updater: (ownedProperty: Required<OwnedProperty>) => Required<OwnedProperty>,
+  updater: (ownedProperty: NormalizedOwnedProperty) => NormalizedOwnedProperty,
 ) {
   return state.ownedProperties.map((ownedProperty) =>
     ownedProperty.propertyId === propertyId

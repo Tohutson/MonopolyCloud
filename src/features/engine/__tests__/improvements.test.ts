@@ -1,9 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { gameReducer } from "../gameReducer";
 import {
+  canPlayerRaiseCashViaMortgages,
   canBuildHouse,
   canMortgageProperty,
+  canUnmortgageProperty,
+  colorGroupHasBuildings,
+  colorGroupHasMortgagedProperty,
+  getMortgageValueForProperty,
   getOwnedPropertyRecord,
+  getPlayerMortgageableProperties,
+  getPlayerMortgagedProperties,
+  getPlayerPotentialMortgageCash,
+  getUnmortgageCostForProperty,
   ownsFullColorGroup,
 } from "../rules/improvements";
 import {
@@ -48,7 +57,7 @@ describe("property improvement rules", () => {
     const missingGroup = ownProperties(["boardwalk"]);
     const mortgagedGroup = markPropertyOwned(
       markPropertyOwned(markTurnRolled(createActiveGameForTest()), "park-place", "player-1", {
-        isMortgaged: true,
+        mortgaged: true,
       }),
       "boardwalk",
       "player-1",
@@ -119,7 +128,7 @@ describe("property improvement rules", () => {
     const mortgagedGroup = markPropertyOwned(
       markPropertyOwned(markTurnRolled(createActiveGameForTest()), "park-place", "player-1", {
         houses: 4,
-        isMortgaged: true,
+        mortgaged: true,
       }),
       "boardwalk",
       "player-1",
@@ -204,7 +213,172 @@ describe("property improvement rules", () => {
     });
 
     expect(mortgaged.players[0].cash).toBe(1775);
-    expect(getOwnedPropertyRecord(mortgaged, "park-place")?.isMortgaged).toBe(
+    expect(getOwnedPropertyRecord(mortgaged, "park-place")?.mortgaged).toBe(
+      true,
+    );
+  });
+
+  it("mortgages owned unmortgaged properties for their mortgage value", () => {
+    const state = ownProperties(["boardwalk"]);
+
+    const nextState = gameReducer(state, {
+      type: "MORTGAGE_PROPERTY",
+      propertyId: "boardwalk",
+    });
+
+    expect(nextState.players[0].cash).toBe(1700);
+    expect(getOwnedPropertyRecord(nextState, "boardwalk")?.mortgaged).toBe(
+      true,
+    );
+    expect(nextState.turnPhase).toBe("OPTIONAL_ACTIONS");
+    expect(nextState.log[0].message).toBe(
+      "Player 1 mortgaged Boardwalk and received $200.",
+    );
+  });
+
+  it("does not mortgage someone else's property, an already mortgaged property, or a non-property square", () => {
+    const someoneElsesProperty = markPropertyOwned(
+      markTurnRolled(createActiveGameForTest()),
+      "boardwalk",
+      "player-2",
+    );
+    const mortgagedProperty = markPropertyOwned(
+      markTurnRolled(createActiveGameForTest()),
+      "boardwalk",
+      "player-1",
+      { mortgaged: true },
+    );
+    const nonPropertyAttempt = ownProperties(["boardwalk"]);
+
+    expect(
+      gameReducer(someoneElsesProperty, {
+        type: "MORTGAGE_PROPERTY",
+        propertyId: "boardwalk",
+      }),
+    ).toBe(someoneElsesProperty);
+    expect(
+      gameReducer(mortgagedProperty, {
+        type: "MORTGAGE_PROPERTY",
+        propertyId: "boardwalk",
+      }),
+    ).toBe(mortgagedProperty);
+    expect(
+      gameReducer(nonPropertyAttempt, {
+        type: "MORTGAGE_PROPERTY",
+        propertyId: "go",
+      }),
+    ).toBe(nonPropertyAttempt);
+  });
+
+  it("unmortgages owned properties by paying principal plus interest", () => {
+    const state = markPropertyOwned(
+      markTurnRolled(createActiveGameForTest()),
+      "boardwalk",
+      "player-1",
+      { mortgaged: true },
+    );
+
+    const nextState = gameReducer(state, {
+      type: "UNMORTGAGE_PROPERTY",
+      propertyId: "boardwalk",
+    });
+
+    expect(nextState.players[0].cash).toBe(1280);
+    expect(getOwnedPropertyRecord(nextState, "boardwalk")?.mortgaged).toBe(
+      false,
+    );
+    expect(nextState.turnPhase).toBe("OPTIONAL_ACTIONS");
+    expect(nextState.log[0].message).toBe(
+      "Player 1 unmortgaged Boardwalk for $220.",
+    );
+  });
+
+  it("does not unmortgage someone else's property, an unmortgaged property, or a property the player cannot afford", () => {
+    const someoneElsesProperty = markPropertyOwned(
+      markTurnRolled(createActiveGameForTest()),
+      "boardwalk",
+      "player-2",
+      { mortgaged: true },
+    );
+    const unmortgagedProperty = ownProperties(["boardwalk"]);
+    const lowCash = setCurrentPlayerCash(
+      markPropertyOwned(
+        markTurnRolled(createActiveGameForTest()),
+        "boardwalk",
+        "player-1",
+        { mortgaged: true },
+      ),
+      219,
+    );
+
+    expect(
+      gameReducer(someoneElsesProperty, {
+        type: "UNMORTGAGE_PROPERTY",
+        propertyId: "boardwalk",
+      }),
+    ).toBe(someoneElsesProperty);
+    expect(
+      gameReducer(unmortgagedProperty, {
+        type: "UNMORTGAGE_PROPERTY",
+        propertyId: "boardwalk",
+      }),
+    ).toBe(unmortgagedProperty);
+    expect(
+      gameReducer(lowCash, {
+        type: "UNMORTGAGE_PROPERTY",
+        propertyId: "boardwalk",
+      }),
+    ).toBe(lowCash);
+  });
+
+  it("exposes mortgage values and player mortgage capacity for future bankruptcy flow", () => {
+    const state = markPropertyOwned(
+      markPropertyOwned(
+        markPropertyOwned(
+          markTurnRolled(createActiveGameForTest()),
+          "boardwalk",
+          "player-1",
+        ),
+        "park-place",
+        "player-1",
+        { mortgaged: true },
+      ),
+      "reading-railroad",
+      "player-1",
+    );
+
+    expect(getMortgageValueForProperty(state, "boardwalk")).toBe(200);
+    expect(getUnmortgageCostForProperty(state, "boardwalk")).toBe(220);
+    expect(getOwnedPropertyRecord(state, "park-place")?.ownerId).toBe(
+      "player-1",
+    );
+    expect(getPlayerMortgagedProperties(state, "player-1")).toHaveLength(1);
+    expect(getPlayerMortgageableProperties(state, "player-1")).toHaveLength(2);
+    expect(getPlayerPotentialMortgageCash(state, "player-1")).toBe(300);
+    expect(canPlayerRaiseCashViaMortgages(state, "player-1", 300)).toBe(true);
+    expect(canPlayerRaiseCashViaMortgages(state, "player-1", 301)).toBe(false);
+  });
+
+  it("exposes color group mortgage and building checks for future construction rules", () => {
+    const state = markPropertyOwned(
+      markPropertyOwned(
+        markTurnRolled(createActiveGameForTest()),
+        "park-place",
+        "player-1",
+        { mortgaged: true },
+      ),
+      "boardwalk",
+      "player-1",
+      { houses: 1 },
+    );
+
+    expect(colorGroupHasMortgagedProperty(state, "dark-blue")).toBe(true);
+    expect(colorGroupHasBuildings(state, "dark-blue")).toBe(true);
+    expect(canMortgageProperty(state, "player-1", "boardwalk").allowed).toBe(
+      false,
+    );
+    expect(canBuildHouse(state, "player-1", "boardwalk").allowed).toBe(false);
+    expect(canUnmortgageProperty(state, "player-1", "park-place").allowed).toBe(
       true,
     );
   });

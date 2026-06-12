@@ -120,7 +120,7 @@ describe("calculateRentForProperty", () => {
         createActiveGameForTest(),
         "mediterranean-avenue",
         "player-2",
-        { isMortgaged: true },
+        { mortgaged: true },
       ),
       "baltic-avenue",
       "player-2",

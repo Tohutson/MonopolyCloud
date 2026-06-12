@@ -8,7 +8,9 @@ import {
   canSellHotel,
   canSellHouse,
   canUnmortgageProperty,
+  getMortgageValue,
   getOwnedPropertyRecord,
+  getUnmortgageCost,
   isColorProperty,
 } from "../engine/rules/improvements";
 import { calculateRentForProperty } from "../engine/rules/rent";
@@ -161,7 +163,9 @@ export function TurnControls({
                           property,
                           currentPlayer.id,
                         )}
-                        {ownedProperty?.isMortgaged ? " · Mortgaged" : ""}
+                        {ownedProperty?.mortgaged ? " · Mortgaged" : ""}
+                        {" · "}Mortgage ${getMortgageValue(property)}
+                        {" · "}Unmortgage ${getUnmortgageCost(property)}
                       </p>
                     </div>
                     {isColorProperty(property) && (
