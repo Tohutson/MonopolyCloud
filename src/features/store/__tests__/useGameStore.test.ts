@@ -1,9 +1,23 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { rollTwoDice } from "../../engine/rules/dice";
 import { createInitialGame } from "../../engine/createInitialGame";
 import { useGameStore } from "../useGameStore";
 
+vi.mock("../../engine/rules/dice", () => ({
+  rollTwoDice: vi.fn(),
+}));
+
+const mockedRollTwoDice = vi.mocked(rollTwoDice);
+
 describe("useGameStore", () => {
   beforeEach(() => {
+    mockedRollTwoDice.mockReset();
+    mockedRollTwoDice.mockReturnValue({
+      die1: 1,
+      die2: 2,
+      total: 3,
+    });
+
     useGameStore.setState({
       state: createInitialGame(),
     });
@@ -53,7 +67,7 @@ describe("useGameStore", () => {
 
     expect(resolvedState.pendingRoll).toBeNull();
     expect(resolvedState.players[0].position).toBe(pendingRoll.finalPosition);
-    expect(resolvedState.turnPhase).toBe("OPTIONAL_ACTIONS");
+    expect(resolvedState.turnPhase).toBe("PROPERTY_DECISION");
   });
 
   it("dispatches RESET_GAME back to a fresh initial state", () => {

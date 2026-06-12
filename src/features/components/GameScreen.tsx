@@ -2,11 +2,13 @@
 
 import { useGameStore } from "../store/useGameStore";
 import { CurrentSquarePanel } from "./CurrentSquarePanel";
+import { AuctionControls } from "./AuctionControls";
 import { GameBoard } from "./GameBoard";
 import { GameLog } from "./GameLog";
 import { PlayerPanel } from "./PlayerPanel";
 import { TurnControls } from "./TurnControls";
 import { JailControls } from "./JailControls";
+import { PropertyDecisionModal } from "./PropertyDecisionModal";
 import { useTurnAnimationController } from "./useTurnAnimationController";
 
 export function GameScreen() {
@@ -31,15 +33,38 @@ export function GameScreen() {
 
   const canBuy =
     state.status === "ACTIVE" &&
-    state.turnPhase === "OPTIONAL_ACTIONS" &&
+    state.turnPhase === "PROPERTY_DECISION" &&
     !turnAnimation.isAnimatingTurn &&
     currentSquare.type === "PROPERTY" &&
     !ownedProperty &&
     currentPlayer.cash >= currentSquare.price;
+  const isAuctionPending =
+    state.status === "ACTIVE" &&
+    state.turnPhase === "AUCTION" &&
+    currentSquare.type === "PROPERTY" &&
+    !ownedProperty;
+  const propertyDecision =
+    state.status === "ACTIVE" &&
+    state.turnPhase === "PROPERTY_DECISION" &&
+    !turnAnimation.isAnimatingTurn &&
+    currentSquare.type === "PROPERTY" &&
+    !ownedProperty
+      ? currentSquare
+      : null;
   const isInJail = currentPlayer.jailState.isInJail;
+  const isAuction = state.turnPhase === "AUCTION";
 
   return (
     <main className="min-h-screen bg-stone-100 px-4 py-6 text-slate-950 sm:px-6 lg:px-8">
+      {propertyDecision && (
+        <PropertyDecisionModal
+          property={propertyDecision}
+          currentPlayer={currentPlayer}
+          canBuy={canBuy}
+          dispatch={dispatch}
+        />
+      )}
+
       <div className="mx-auto max-w-[1500px] space-y-5">
         <header className="border border-slate-950 bg-white px-5 py-4 shadow-[6px_6px_0_#d6a531]">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -75,7 +100,9 @@ export function GameScreen() {
           </section>
 
           <aside className="space-y-4 xl:max-h-[calc(100vh-150px)] xl:overflow-y-auto xl:pr-1">
-            {isInJail ? (
+            {isAuction ? (
+              <AuctionControls state={state} dispatch={dispatch} />
+            ) : isInJail ? (
               <JailControls
                 state={state}
                 dispatch={dispatch}
@@ -97,8 +124,7 @@ export function GameScreen() {
               currentSquare={currentSquare}
               ownedProperty={ownedProperty}
               propertyOwner={propertyOwner}
-              canBuy={canBuy}
-              dispatch={dispatch}
+              isAuctionPending={isAuctionPending}
             />
             <GameLog entries={state.log} />
           </aside>

@@ -28,11 +28,22 @@ export interface GameLogEntry {
   message: string;
 }
 
+export interface AuctionState {
+  propertyId: string;
+  currentBidderId: string;
+  topBidderId: string | null;
+  topBid: number;
+  passedPlayerIds: string[];
+  declinedByPlayerId: string;
+}
+
 export type TurnPhase =
   | "INACTIVE"
   | "ROLL_READY"
   | "MOVING"
   | "RESOLVE_SQUARE"
+  | "PROPERTY_DECISION"
+  | "AUCTION"
   | "OPTIONAL_ACTIONS";
 
 export interface GameState {
@@ -47,6 +58,7 @@ export interface GameState {
   communityChestDeck: Card[];
   lastDiceRoll: DiceRoll | null;
   pendingRoll: PendingRoll | null;
+  auctionState: AuctionState | null;
   rolledDoublesCount: number;
   diceRollSequence: number;
   winnerId: string | null;

@@ -1,4 +1,3 @@
-import { GameAction } from "../types/actions";
 import { BoardSquare } from "../types/board";
 import { OwnedProperty } from "../types/game";
 import { Player } from "../types/player";
@@ -8,8 +7,7 @@ interface CurrentSquarePanelProps {
   currentSquare: BoardSquare;
   ownedProperty?: OwnedProperty;
   propertyOwner?: Player | null;
-  canBuy: boolean;
-  dispatch: (action: GameAction) => void;
+  isAuctionPending: boolean;
 }
 
 function formatSquareType(type: BoardSquare["type"]) {
@@ -21,8 +19,7 @@ export function CurrentSquarePanel({
   currentSquare,
   ownedProperty,
   propertyOwner,
-  canBuy,
-  dispatch,
+  isAuctionPending,
 }: CurrentSquarePanelProps) {
   const isProperty = currentSquare.type === "PROPERTY";
 
@@ -103,21 +100,13 @@ export function CurrentSquarePanel({
 
           {!ownedProperty && (
             <div className="border-t border-slate-950 bg-stone-50 p-3">
-              {canBuy ? (
-                <button
-                  className="w-full border border-slate-950 bg-amber-500 px-4 py-2 text-sm font-black uppercase tracking-wide text-slate-950 shadow-[3px_3px_0_#111827] transition hover:-translate-y-0.5 hover:shadow-[4px_4px_0_#111827]"
-                  onClick={() =>
-                    dispatch({
-                      type: "BUY_PROPERTY",
-                      propertyId: currentSquare.id,
-                    })
-                  }
-                >
-                  Buy for ${currentSquare.price}
-                </button>
+              {isAuctionPending ? (
+                <p className="text-sm font-semibold text-slate-700">
+                  Auction is ready to start for this property.
+                </p>
               ) : (
                 <p className="text-sm font-semibold text-slate-600">
-                  This property is available, but cannot be bought right now.
+                  This property is available.
                 </p>
               )}
             </div>

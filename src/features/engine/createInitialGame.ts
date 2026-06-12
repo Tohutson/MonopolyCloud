@@ -53,6 +53,8 @@ export function createInitialGame(): GameState {
 
     pendingRoll: null,
 
+    auctionState: null,
+
     rolledDoublesCount: 0,
     diceRollSequence: 0,
 

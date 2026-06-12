@@ -10,7 +10,7 @@ export function buyPropertyAction(
     return state;
   }
 
-  if (state.turnPhase !== "OPTIONAL_ACTIONS") {
+  if (state.turnPhase !== "PROPERTY_DECISION") {
     return state;
   }
 
@@ -72,6 +72,7 @@ export function buyPropertyAction(
     ...state,
     players: updatedPlayers,
     ownedProperties: updatedOwnedProperties,
+    turnPhase: "OPTIONAL_ACTIONS",
     log: updatedLog,
   };
 }

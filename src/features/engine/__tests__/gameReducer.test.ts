@@ -7,12 +7,15 @@ import { getPropertyOwnerId } from "../rules/ownership";
 import { checkWinCondition } from "../rules/winConditions";
 import {
   createActiveGameForTest,
+  markPropertyDecision,
   markPropertyOwned,
   markTurnRolled,
   setCurrentPlayerCash,
   setCurrentPlayerIndex,
   setCurrentPlayerPosition,
   setCurrentPlayerStatus,
+  setPlayerCash,
+  setPlayerStatus,
 } from "./testUtils";
 
 vi.mock("@/features/engine/rules/dice", () => ({
@@ -212,7 +215,7 @@ describe("gameReducer", () => {
 
       expect(nextState.players[0].position).toBe(3);
       expect(nextState.pendingRoll).toBeNull();
-      expect(nextState.turnPhase).toBe("OPTIONAL_ACTIONS");
+      expect(nextState.turnPhase).toBe("PROPERTY_DECISION");
       expect(nextState.log[0].message).toBe(
         "Player 1 landed on Baltic Avenue. It is available for $60.",
       );
@@ -411,6 +414,19 @@ describe("gameReducer", () => {
       expect(nextState.currentPlayerIndex).toBe(0);
     });
 
+    it("does nothing while an unowned property decision is pending", () => {
+      const state = markPropertyDecision(
+        setCurrentPlayerPosition(createActiveGameForTest(), 1),
+      );
+
+      const nextState = gameReducer(state, {
+        type: "END_TURN",
+      });
+
+      expect(nextState).toBe(state);
+      expect(nextState.currentPlayerIndex).toBe(0);
+    });
+
     it("switches to the next player after rolling and resets turn roll state", () => {
       const state = markTurnRolled(createActiveGameForTest());
 
@@ -491,7 +507,7 @@ describe("gameReducer", () => {
     });
 
     it("buys an unowned property and records the owner", () => {
-      const state = markTurnRolled(
+      const state = markPropertyDecision(
         setCurrentPlayerPosition(createActiveGameForTest(), 1),
       );
 
@@ -513,11 +529,14 @@ describe("gameReducer", () => {
       expect(nextState.log[0].message).toBe(
         "Player 1 bought Mediterranean Avenue for $60.",
       );
+      expect(nextState.turnPhase).toBe("OPTIONAL_ACTIONS");
     });
 
     it("does not duplicate an already owned property", () => {
       const state = markPropertyOwned(
-        markTurnRolled(setCurrentPlayerPosition(createActiveGameForTest(), 1)),
+        markPropertyDecision(
+          setCurrentPlayerPosition(createActiveGameForTest(), 1),
+        ),
         "mediterranean-avenue",
         "player-2",
       );
@@ -537,7 +556,9 @@ describe("gameReducer", () => {
 
     it("does not buy a property the player cannot afford", () => {
       const state = setCurrentPlayerCash(
-        markTurnRolled(setCurrentPlayerPosition(createActiveGameForTest(), 1)),
+        markPropertyDecision(
+          setCurrentPlayerPosition(createActiveGameForTest(), 1),
+        ),
         59,
       );
 
@@ -551,6 +572,21 @@ describe("gameReducer", () => {
       expect(nextState.log[0].message).toBe(
         "Player 1 cannot afford Mediterranean Avenue.",
       );
+      expect(nextState.turnPhase).toBe("PROPERTY_DECISION");
+    });
+
+    it("does nothing when the property decision is not pending", () => {
+      const state = markTurnRolled(
+        setCurrentPlayerPosition(createActiveGameForTest(), 1),
+      );
+
+      const nextState = gameReducer(state, {
+        type: "BUY_PROPERTY",
+        propertyId: "mediterranean-avenue",
+      });
+
+      expect(nextState).toBe(state);
+      expect(nextState.ownedProperties).toEqual([]);
     });
 
     it("does nothing after the game is finished", () => {
@@ -568,6 +604,251 @@ describe("gameReducer", () => {
 
       expect(nextState).toBe(finishedState);
       expect(nextState.ownedProperties).toEqual([]);
+    });
+  });
+
+  describe("DECLINE_PROPERTY", () => {
+    it("starts an auction when the current player declines an unowned property", () => {
+      const state = markPropertyDecision(
+        setCurrentPlayerPosition(createActiveGameForTest(), 1),
+      );
+
+      const nextState = gameReducer(state, {
+        type: "DECLINE_PROPERTY",
+        propertyId: "mediterranean-avenue",
+      });
+
+      expect(nextState.turnPhase).toBe("AUCTION");
+      expect(nextState.auctionState).toEqual({
+        propertyId: "mediterranean-avenue",
+        currentBidderId: "player-1",
+        topBidderId: null,
+        topBid: 0,
+        passedPlayerIds: [],
+        declinedByPlayerId: "player-1",
+      });
+      expect(nextState.ownedProperties).toEqual([]);
+      expect(nextState.log[0].message).toBe(
+        "Player 1 declined Mediterranean Avenue. Auction will start.",
+      );
+    });
+
+    it("does nothing when the property decision is not pending", () => {
+      const state = markTurnRolled(
+        setCurrentPlayerPosition(createActiveGameForTest(), 1),
+      );
+
+      const nextState = gameReducer(state, {
+        type: "DECLINE_PROPERTY",
+        propertyId: "mediterranean-avenue",
+      });
+
+      expect(nextState).toBe(state);
+    });
+  });
+
+  describe("auction actions", () => {
+    function createAuctionState() {
+      return gameReducer(
+        markPropertyDecision(
+          setCurrentPlayerPosition(createActiveGameForTest(), 1),
+        ),
+        {
+          type: "DECLINE_PROPERTY",
+          propertyId: "mediterranean-avenue",
+        },
+      );
+    }
+
+    it("keeps the declining player eligible to bid first", () => {
+      const state = createAuctionState();
+
+      expect(state.auctionState?.currentBidderId).toBe("player-1");
+      expect(state.auctionState?.declinedByPlayerId).toBe("player-1");
+    });
+
+    it("lets the current bidder place a legal bid and rotates to the next eligible bidder", () => {
+      const state = createAuctionState();
+
+      const nextState = gameReducer(state, {
+        type: "PLACE_AUCTION_BID",
+        bidderId: "player-1",
+        amount: 80,
+      });
+
+      expect(nextState.auctionState).toMatchObject({
+        propertyId: "mediterranean-avenue",
+        currentBidderId: "player-2",
+        topBidderId: "player-1",
+        topBid: 80,
+        passedPlayerIds: [],
+      });
+      expect(nextState.log[0].message).toBe(
+        "Player 1 bid $80 for Mediterranean Avenue.",
+      );
+    });
+
+    it("does nothing when a non-current bidder tries to bid", () => {
+      const state = createAuctionState();
+
+      const nextState = gameReducer(state, {
+        type: "PLACE_AUCTION_BID",
+        bidderId: "player-2",
+        amount: 80,
+      });
+
+      expect(nextState).toBe(state);
+    });
+
+    it("does nothing when a non-current bidder tries to pass", () => {
+      const state = createAuctionState();
+
+      const nextState = gameReducer(state, {
+        type: "PASS_AUCTION_BID",
+        bidderId: "player-2",
+      });
+
+      expect(nextState).toBe(state);
+    });
+
+    it("marks the current bidder out when they pass and rotates to the next eligible bidder", () => {
+      const state = createAuctionState();
+
+      const nextState = gameReducer(state, {
+        type: "PASS_AUCTION_BID",
+        bidderId: "player-1",
+      });
+
+      expect(nextState.auctionState).toMatchObject({
+        currentBidderId: "player-2",
+        topBidderId: null,
+        topBid: 0,
+        passedPlayerIds: ["player-1"],
+      });
+      expect(nextState.log[0].message).toBe(
+        "Player 1 passed on Mediterranean Avenue.",
+      );
+    });
+
+    it("skips bankrupt players and does not leave the auction stuck", () => {
+      const state = gameReducer(
+        markPropertyDecision(
+          setPlayerStatus(
+            setCurrentPlayerPosition(createActiveGameForTest(), 1),
+            1,
+            "BANKRUPT",
+          ),
+        ),
+        {
+          type: "DECLINE_PROPERTY",
+          propertyId: "mediterranean-avenue",
+        },
+      );
+
+      const nextState = gameReducer(state, {
+        type: "PASS_AUCTION_BID",
+        bidderId: "player-1",
+      });
+
+      expect(nextState.auctionState).toBeNull();
+      expect(nextState.turnPhase).toBe("OPTIONAL_ACTIONS");
+      expect(nextState.ownedProperties).toEqual([]);
+      expect(nextState.log[0].message).toBe(
+        "Auction ended for Mediterranean Avenue with no bids.",
+      );
+    });
+
+    it("does not allow a player to bid more cash than they have", () => {
+      const state = setPlayerCash(createAuctionState(), 0, 79);
+
+      const nextState = gameReducer(state, {
+        type: "PLACE_AUCTION_BID",
+        bidderId: "player-1",
+        amount: 80,
+      });
+
+      expect(nextState).toBe(state);
+    });
+
+    it("does not allow a bid less than or equal to the current top bid", () => {
+      const state = gameReducer(createAuctionState(), {
+        type: "PLACE_AUCTION_BID",
+        bidderId: "player-1",
+        amount: 80,
+      });
+
+      const nextState = gameReducer(state, {
+        type: "PLACE_AUCTION_BID",
+        bidderId: "player-2",
+        amount: 80,
+      });
+
+      expect(nextState).toBe(state);
+    });
+
+    it("does not allow bidding on an already-owned property", () => {
+      const state = markPropertyOwned(
+        createAuctionState(),
+        "mediterranean-avenue",
+        "player-2",
+      );
+
+      const nextState = gameReducer(state, {
+        type: "PLACE_AUCTION_BID",
+        bidderId: "player-1",
+        amount: 80,
+      });
+
+      expect(nextState).toBe(state);
+    });
+
+    it("ends with no owner if everyone passes before any bid is placed", () => {
+      const state = gameReducer(createAuctionState(), {
+        type: "PASS_AUCTION_BID",
+        bidderId: "player-1",
+      });
+
+      const nextState = gameReducer(state, {
+        type: "PASS_AUCTION_BID",
+        bidderId: "player-2",
+      });
+
+      expect(nextState.auctionState).toBeNull();
+      expect(nextState.turnPhase).toBe("OPTIONAL_ACTIONS");
+      expect(nextState.ownedProperties).toEqual([]);
+      expect(getPropertyOwnerId(nextState, "mediterranean-avenue")).toBeNull();
+      expect(nextState.log[0].message).toBe(
+        "Auction ended for Mediterranean Avenue with no bids.",
+      );
+    });
+
+    it("awards the property when one bidder remains after at least one bid", () => {
+      const state = gameReducer(createAuctionState(), {
+        type: "PLACE_AUCTION_BID",
+        bidderId: "player-1",
+        amount: 80,
+      });
+
+      const nextState = gameReducer(state, {
+        type: "PASS_AUCTION_BID",
+        bidderId: "player-2",
+      });
+
+      expect(nextState.auctionState).toBeNull();
+      expect(nextState.turnPhase).toBe("OPTIONAL_ACTIONS");
+      expect(nextState.players[0].cash).toBe(1420);
+      expect(nextState.ownedProperties).toEqual([
+        {
+          propertyId: "mediterranean-avenue",
+          ownerId: "player-1",
+        },
+      ]);
+      expect(getPropertyOwnerId(nextState, "mediterranean-avenue")).toBe(
+        "player-1",
+      );
+      expect(nextState.log[0].message).toBe(
+        "Player 1 won Mediterranean Avenue at auction for $80.",
+      );
     });
   });
 });

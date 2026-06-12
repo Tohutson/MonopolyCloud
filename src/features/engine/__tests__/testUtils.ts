@@ -36,10 +36,18 @@ export function setCurrentPlayerCash(
   state: GameState,
   cash: number,
 ): GameState {
+  return setPlayerCash(state, state.currentPlayerIndex, cash);
+}
+
+export function setPlayerCash(
+  state: GameState,
+  playerIndex: number,
+  cash: number,
+): GameState {
   return {
     ...state,
     players: state.players.map((player, index) =>
-      index === state.currentPlayerIndex ? { ...player, cash } : player,
+      index === playerIndex ? { ...player, cash } : player,
     ),
   };
 }
@@ -48,10 +56,18 @@ export function setCurrentPlayerStatus(
   state: GameState,
   status: PlayerStatus,
 ): GameState {
+  return setPlayerStatus(state, state.currentPlayerIndex, status);
+}
+
+export function setPlayerStatus(
+  state: GameState,
+  playerIndex: number,
+  status: PlayerStatus,
+): GameState {
   return {
     ...state,
     players: state.players.map((player, index) =>
-      index === state.currentPlayerIndex ? { ...player, status } : player,
+      index === playerIndex ? { ...player, status } : player,
     ),
   };
 }
@@ -88,6 +104,13 @@ export function markTurnRolled(state: GameState): GameState {
       die2: 2,
       total: 3,
     },
+  };
+}
+
+export function markPropertyDecision(state: GameState): GameState {
+  return {
+    ...markTurnRolled(state),
+    turnPhase: "PROPERTY_DECISION",
   };
 }
 

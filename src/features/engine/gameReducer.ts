@@ -3,10 +3,15 @@ import { GameAction } from "../types/actions";
 import { createInitialGame } from "./createInitialGame";
 import { completeMoveAction } from "./actions/completeMoveAction";
 import { buyPropertyAction } from "./actions/buyPropertyAction";
+import { declinePropertyAction } from "./actions/declinePropertyAction";
 import { endTurnAction } from "./actions/endTurnAction";
 import { resolveSquareAction } from "./actions/resolveSquareAction";
 import { rollDiceAction } from "./actions/rollDiceAction";
 import { startGameAction } from "./actions/startGameAction";
+import {
+  passAuctionBidAction,
+  placeAuctionBidAction,
+} from "./actions/auctionActions";
 import {
   payToLeaveJail,
   playGetOutOfJailCard,
@@ -29,6 +34,15 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "BUY_PROPERTY":
       return buyPropertyAction(state, action.propertyId);
+
+    case "DECLINE_PROPERTY":
+      return declinePropertyAction(state, action.propertyId);
+
+    case "PLACE_AUCTION_BID":
+      return placeAuctionBidAction(state, action.bidderId, action.amount);
+
+    case "PASS_AUCTION_BID":
+      return passAuctionBidAction(state, action.bidderId);
 
     case "END_TURN":
       return endTurnAction(state);
