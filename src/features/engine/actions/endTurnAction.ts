@@ -14,7 +14,11 @@ export function endTurnAction(state: GameState): GameState {
     return state;
   }
 
-  const nextPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+  const nextPlayerIndex = getNextActivePlayerIndex(state);
+
+  if (nextPlayerIndex === null) {
+    return state;
+  }
 
   return {
     ...state,
@@ -28,4 +32,16 @@ export function endTurnAction(state: GameState): GameState {
       `${state.players[nextPlayerIndex].name}'s turn started.`,
     ),
   };
+}
+
+function getNextActivePlayerIndex(state: GameState): number | null {
+  for (let offset = 1; offset <= state.players.length; offset += 1) {
+    const playerIndex = (state.currentPlayerIndex + offset) % state.players.length;
+
+    if (state.players[playerIndex].status === "ACTIVE") {
+      return playerIndex;
+    }
+  }
+
+  return null;
 }

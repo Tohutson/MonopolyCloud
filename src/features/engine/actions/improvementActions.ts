@@ -212,7 +212,9 @@ function getCurrentPlayerForOptionalAction(state: GameState) {
     return null;
   }
 
-  return state.players[state.currentPlayerIndex];
+  const currentPlayer = state.players[state.currentPlayerIndex];
+
+  return currentPlayer.status === "ACTIVE" ? currentPlayer : null;
 }
 
 function updatePlayerCash(

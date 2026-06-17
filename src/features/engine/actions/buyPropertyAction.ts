@@ -15,6 +15,10 @@ export function buyPropertyAction(
   }
 
   const currentPlayer = state.players[state.currentPlayerIndex];
+  if (currentPlayer.status !== "ACTIVE") {
+    return state;
+  }
+
   const currentSquare = state.board[currentPlayer.position];
 
   if (currentSquare.type !== "PROPERTY") {

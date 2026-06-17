@@ -12,6 +12,11 @@ export function resolveSquareAction(state: GameState): GameState {
     return state;
   }
 
+  const currentPlayer = state.players[state.currentPlayerIndex];
+  if (currentPlayer.status !== "ACTIVE") {
+    return state;
+  }
+
   const resolvedState = resolveLandedSquare(state);
   const checkedState = checkWinCondition(resolvedState);
 

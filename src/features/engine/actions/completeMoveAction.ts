@@ -18,6 +18,10 @@ export function completeMoveAction(state: GameState): GameState {
 
   const currentPlayer = state.players[state.currentPlayerIndex];
 
+  if (currentPlayer.status !== "ACTIVE") {
+    return state;
+  }
+
   if (currentPlayer.id !== pendingRoll.playerId) {
     return state;
   }

@@ -3,7 +3,7 @@ import { checkWinCondition } from "../rules/winConditions";
 import { createActiveGameForTest } from "./testUtils";
 
 describe("checkWinCondition", () => {
-  it("marks a player with negative cash as bankrupt", () => {
+  it("does not mark a player bankrupt only because cash is negative", () => {
     const state = {
       ...createActiveGameForTest(),
       players: createActiveGameForTest().players.map((player, index) =>
@@ -13,7 +13,7 @@ describe("checkWinCondition", () => {
 
     const nextState = checkWinCondition(state);
 
-    expect(nextState.players[0].status).toBe("BANKRUPT");
+    expect(nextState.players[0].status).toBe("ACTIVE");
     expect(nextState.players[1].status).toBe("ACTIVE");
   });
 
@@ -21,7 +21,7 @@ describe("checkWinCondition", () => {
     const state = {
       ...createActiveGameForTest(),
       players: createActiveGameForTest().players.map((player, index) =>
-        index === 0 ? { ...player, cash: -1 } : player,
+        index === 0 ? { ...player, status: "BANKRUPT" as const } : player,
       ),
     };
 
@@ -35,7 +35,7 @@ describe("checkWinCondition", () => {
     const state = {
       ...createActiveGameForTest(),
       players: createActiveGameForTest().players.map((player, index) =>
-        index === 0 ? { ...player, cash: -1 } : player,
+        index === 0 ? { ...player, status: "BANKRUPT" as const } : player,
       ),
     };
 

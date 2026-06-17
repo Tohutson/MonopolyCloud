@@ -2,17 +2,11 @@ import { addLog } from "./logging";
 import { GameState } from "@/features/types/game";
 
 export function checkWinCondition(state: GameState): GameState {
-  const updatedPlayers = state.players.map((player) => {
-    if (player.cash < 0) {
-      return {
-        ...player,
-        status: "BANKRUPT" as const,
-      };
-    }
-    return player;
-  });
+  if (state.status === "FINISHED") {
+    return state;
+  }
 
-  const activePlayers = updatedPlayers.filter(
+  const activePlayers = state.players.filter(
     (player) => player.status === "ACTIVE",
   );
 
@@ -20,7 +14,6 @@ export function checkWinCondition(state: GameState): GameState {
     const winner = activePlayers[0];
     return {
       ...state,
-      players: updatedPlayers,
       status: "FINISHED",
       winnerId: winner.id,
       log: addLog(state, `${winner.name} wins the game!`),
@@ -29,6 +22,5 @@ export function checkWinCondition(state: GameState): GameState {
 
   return {
     ...state,
-    players: updatedPlayers,
   };
 }

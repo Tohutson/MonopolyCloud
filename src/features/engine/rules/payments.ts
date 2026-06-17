@@ -1,27 +1,15 @@
 import { GameState } from "../../types/game";
 import { addLog } from "./logging";
+import { resolveDebt } from "./bankruptcy";
 
 export function chargeCurrentPlayer(
   state: GameState,
   amount: number,
   message: string,
 ): GameState {
-  const updatedPlayers = state.players.map((player, index) => {
-    if (index !== state.currentPlayerIndex) {
-      return player;
-    }
+  const currentPlayer = state.players[state.currentPlayerIndex];
 
-    return {
-      ...player,
-      cash: player.cash - amount,
-    };
-  });
-
-  return {
-    ...state,
-    players: updatedPlayers,
-    log: addLog(state, message),
-  };
+  return resolveDebt(state, currentPlayer.id, amount, { type: "BANK" }, message);
 }
 
 export function payCurrentPlayer(
@@ -29,6 +17,12 @@ export function payCurrentPlayer(
   amount: number,
   message: string,
 ): GameState {
+  const currentPlayer = state.players[state.currentPlayerIndex];
+
+  if (currentPlayer.status !== "ACTIVE") {
+    return state;
+  }
+
   const updatedPlayers = state.players.map((player, index) => {
     if (index !== state.currentPlayerIndex) {
       return player;
@@ -56,30 +50,11 @@ export function payRent(
   amount: number,
   propertyName: string,
 ): GameState {
-  const updatedPlayers = state.players.map((player) => {
-    if (player.id === payerId) {
-      return {
-        ...player,
-        cash: player.cash - amount,
-      };
-    }
-
-    if (player.id === ownerId) {
-      return {
-        ...player,
-        cash: player.cash + amount,
-      };
-    }
-
-    return player;
-  });
-
-  return {
-    ...state,
-    players: updatedPlayers,
-    log: addLog(
-      state,
-      `${payerName} paid $${amount} rent to ${ownerName} for ${propertyName}.`,
-    ),
-  };
+  return resolveDebt(
+    state,
+    payerId,
+    amount,
+    { type: "PLAYER", playerId: ownerId },
+    `${payerName} paid $${amount} rent to ${ownerName} for ${propertyName}.`,
+  );
 }

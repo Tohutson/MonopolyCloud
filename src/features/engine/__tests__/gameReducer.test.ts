@@ -64,7 +64,7 @@ describe("gameReducer", () => {
       const finishedState = checkWinCondition({
         ...createActiveGameForTest(),
         players: createActiveGameForTest().players.map((player, index) =>
-          index === 0 ? { ...player, cash: -1 } : player,
+          index === 0 ? { ...player, status: "BANKRUPT" as const } : player,
         ),
       });
 
@@ -337,14 +337,14 @@ describe("gameReducer", () => {
         type: "RESOLVE_SQUARE",
       });
 
-      expect(nextState.players[0].cash).toBe(-1);
+      expect(nextState.players[0].cash).toBe(0);
       expect(nextState.players[0].status).toBe("BANKRUPT");
-      expect(nextState.players[1].cash).toBe(1570);
+      expect(nextState.players[1].cash).toBe(1569);
       expect(nextState.status).toBe("FINISHED");
       expect(nextState.winnerId).toBe("player-2");
       expect(nextState.log[0].message).toBe("Player 2 wins the game!");
       expect(nextState.log[1].message).toBe(
-        "Player 1 paid $70 rent to Player 2 for Electric Company.",
+        "Player 1 is bankrupt owing $70 to Player 2.",
       );
     });
 
@@ -363,7 +363,9 @@ describe("gameReducer", () => {
       const finishedState = checkWinCondition({
         ...setCurrentPlayerPosition(createActiveGameForTest(), 38),
         players: createActiveGameForTest().players.map((player, index) =>
-          index === 0 ? { ...player, cash: -1, position: 38 } : player,
+          index === 0
+            ? { ...player, status: "BANKRUPT" as const, position: 38 }
+            : player,
         ),
       });
 
@@ -458,7 +460,7 @@ describe("gameReducer", () => {
         checkWinCondition({
           ...createActiveGameForTest(),
           players: createActiveGameForTest().players.map((player, index) =>
-            index === 0 ? { ...player, cash: -1 } : player,
+            index === 0 ? { ...player, status: "BANKRUPT" as const } : player,
           ),
         }),
       );
@@ -596,7 +598,9 @@ describe("gameReducer", () => {
       const finishedState = checkWinCondition({
         ...setCurrentPlayerPosition(createActiveGameForTest(), 1),
         players: createActiveGameForTest().players.map((player, index) =>
-          index === 0 ? { ...player, cash: -1, position: 1 } : player,
+          index === 0
+            ? { ...player, status: "BANKRUPT" as const, position: 1 }
+            : player,
         ),
       });
 
